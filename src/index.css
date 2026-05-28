@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@700&family=Spline+Sans:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-body-lg text-body-lg overflow-x-hidden relative;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 2px, transparent 2px);
+    background-size: 24px 24px;
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .neo-shadow {
+    box-shadow: 4px 4px 0px 0px #0e0e10;
+  }
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0px 0px #0e0e10;
+  }
+  .hover-neo-bloom:hover {
+    box-shadow: 0 0 15px 2px #00dbe9, 4px 4px 0px 0px #0e0e10;
+  }
+}

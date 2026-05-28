@@ -1,0 +1,172 @@
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+
+interface YoutubeVideo {
+  title: string;
+  link: string;
+  thumbnail: string;
+}
+
+interface IdolData {
+  name: string;
+  channelId: string;
+  channelLink: string;
+  colorClass: string;
+  textColorClass: string;
+  btnTextColorClass: string;
+  description: string;
+  defaultImage: string;
+}
+
+const idolsData: IdolData[] = [
+  {
+    name: 'un1verso',
+    channelId: 'UCU7QmMl0-MvJZBBq8MhkAiQ',
+    channelLink: 'https://youtube.com/@un1versoMC',
+    colorClass: 'bg-primary',
+    textColorClass: 'text-primary',
+    btnTextColorClass: 'text-on-primary',
+    description: "Un player (non) normale di Minecraft. Sempre pronto a creare nuove dinamiche e storie sul server.",
+    defaultImage: 'https://placehold.co/600x400/2E5BFF/FFFFFF?text=un1verso'
+  },
+  {
+    name: 'zZalix',
+    channelId: 'UCjvyukIQH5mPPFNswWrCSFA',
+    channelLink: 'https://youtube.com/@zzalixMC',
+    colorClass: 'bg-secondary',
+    textColorClass: 'text-secondary',
+    btnTextColorClass: 'text-on-secondary',
+    description: "Mente creativa e founder. Le sue idee instabili mantengono sempre alta la tensione nella community.",
+    defaultImage: 'https://placehold.co/600x400/FF1F44/FFFFFF?text=zZalix'
+  },
+  {
+    name: 'Muffin',
+    channelId: 'UCDDsl6EiHfLtJFLQwfpdgvA',
+    channelLink: 'https://youtube.com/@il_Muffin',
+    colorClass: 'bg-error',
+    textColorClass: 'text-error',
+    btnTextColorClass: 'text-on-error',
+    description: "Imprevedibile e caotico. Se c'è un'esplosione o una trappola geniale, probabilmente c'è lui dietro.",
+    defaultImage: 'https://placehold.co/600x400/FF1F44/FFFFFF?text=Muffin'
+  },
+  {
+    name: 'Rossinho',
+    channelId: 'UCH8HPTvCZy0O2UpkWXRB6EA',
+    channelLink: 'https://youtube.com/@rossinhoofficial',
+    colorClass: 'bg-blue-600',
+    textColorClass: 'text-blue-600',
+    btnTextColorClass: 'text-white',
+    description: "Maestro del PvP e stratega. Il suo obiettivo? Diventare il miglior combattente di tutta Italia.",
+    defaultImage: 'https://placehold.co/600x400/2E5BFF/FFFFFF?text=Rossinho'
+  }
+];
+
+const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
+  const { t } = useLanguage();
+  const [video, setVideo] = useState<YoutubeVideo | null>(null);
+
+  useEffect(() => {
+    const fetchLatestVideo = async () => {
+      try {
+        const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=https://www.youtube.com/feeds/videos.xml?channel_id=${data.channelId}`);
+        const result = await response.json();
+        
+        if (result.status === 'ok' && result.items && result.items.length > 0) {
+          const longVideos = result.items.filter((item: any) => {
+            const isShort = item.link.includes('/shorts/');
+            const titleLower = item.title.toLowerCase();
+            const isLive = titleLower.includes('live') || titleLower.includes('diretta') || item.title.includes('🔴');
+            return !isShort && !isLive;
+          });
+          
+          if (longVideos.length > 0) {
+            const latestVideo = longVideos[0];
+            setVideo({
+              title: latestVideo.title,
+              link: latestVideo.link,
+              thumbnail: latestVideo.thumbnail.replace('hqdefault.jpg', 'maxresdefault.jpg')
+            });
+          }
+        }
+      } catch (error) {
+        console.error(`Error loading video for ${data.name}:`, error);
+      }
+    };
+
+    fetchLatestVideo();
+  }, [data.channelId, data.name]);
+
+  return (
+    <div className="group relative flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-2 hover:shadow-[11px_11px_0px_0px_rgba(0,0,0,1)]">
+      <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full border-4 border-black opacity-80 transition-transform duration-700 group-hover:scale-125 ${data.colorClass}`}></div>
+      <div className="relative mb-5 h-48 overflow-hidden rounded-3xl border-[3px] border-black bg-surface-container-lowest shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+        <img 
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          alt={video?.title || data.name} 
+          src={video?.thumbnail || data.defaultImage} 
+          onError={(e) => {
+            e.currentTarget.src = data.defaultImage;
+          }}
+        />
+        {video && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="material-symbols-outlined rounded-full border-2 border-black bg-white p-3 text-5xl text-black shadow-[4px_4px_0_rgba(0,0,0,1)]">play_circle</span>
+          </div>
+        )}
+        <div className="absolute left-3 top-3 rounded-2xl border-2 border-black bg-black px-3 py-2 font-label-caps text-[10px] text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+          {t('idols.creator')}
+        </div>
+      </div>
+      <h3 className={`relative z-10 font-headline-md text-[32px] uppercase leading-none ${data.textColorClass}`}>{data.name}</h3>
+      {video ? (
+        <p className="relative z-10 mb-4 mt-3 line-clamp-4 flex-grow rounded-3xl border-2 border-black bg-surface-container-highest p-4 font-body-sm text-body-sm text-on-surface-variant" title={video.title}>
+          <span className="mb-1 block font-bold text-white">{t('idols.latest_video')}</span>
+          {video.title}
+        </p>
+      ) : (
+        <p className="relative z-10 mb-4 mt-3 flex-grow rounded-3xl border-2 border-black bg-surface-container-highest p-4 font-body-sm text-body-sm text-on-surface-variant">
+          {data.description}
+        </p>
+      )}
+      <a 
+        href={video?.link || data.channelLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`relative z-10 mt-auto block w-full rounded-2xl border-[3px] border-black px-4 py-3 text-center font-label-caps text-label-caps shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none ${data.colorClass} ${data.btnTextColorClass}`}
+      >
+        {t('idols.watch_video')}
+      </a>
+    </div>
+  );
+};
+
+const Idols: React.FC = () => {
+  const { t } = useLanguage();
+  return (
+    <section className="relative flex w-full flex-col gap-stack-md overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-4 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] sm:p-6">
+      <div className="absolute inset-0 bg-surface-container-lowest" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 2px, transparent 2px)', backgroundSize: '26px 26px', opacity: 0.35 }}></div>
+      <div className="absolute -right-16 top-8 h-48 w-48 rotate-12 rounded-[2rem] border-4 border-black bg-primary-container opacity-70"></div>
+      <div className="relative z-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-3 inline-flex -rotate-2 items-center gap-2 rounded-2xl border-[3px] border-black bg-secondary-container px-3 py-2 font-label-caps text-label-caps text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <span className="material-symbols-outlined text-[18px]">smart_display</span>
+            {t('idols.badge')}
+          </div>
+          <h2 className="font-headline-lg text-[44px] uppercase leading-none text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-[64px]">
+            {t('idols.title')}
+          </h2>
+        </div>
+        <p className="max-w-xl rounded-3xl border-[3px] border-black bg-surface-container-high p-4 font-body-sm font-bold text-on-surface-variant shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+          {t('idols.description')}
+        </p>
+      </div>
+      <div className="relative z-10 grid grid-cols-1 gap-margin md:grid-cols-2 lg:grid-cols-4">
+        {idolsData.map((idol) => (
+          <IdolCard key={idol.name} data={idol} />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+export default Idols;
