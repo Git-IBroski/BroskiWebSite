@@ -47,12 +47,21 @@ const membersData: Member[] = [
   },
   { 
     name: "un1verso", 
-    rank: "Co-Founder", 
+    rank: "Founder", 
     discord: "un1verso_", 
     youtube: "https://youtube.com/@un1versoMC", 
     twitch: "https://twitch.tv/un1versomc", 
     description: "Il pilastro portante della community e braccio destro di zZalix. Gestisce le dinamiche interne con saggezza e coordinazione, trasformando ogni caos in opportunità. Esperto di gestione community e moderazione, è sempre pronto a risolvere conflitti e creare nuove attività coinvolgenti. Il suo approccio calmo e strategico bilancia perfettamente l'energia instabile del founder, assicurando stabilità e crescita costante.", 
     bgColor: "#4e4e4e" 
+  },
+  { 
+    name: "Pirata91", 
+    rank: "Founder", 
+    discord: "piratamc", 
+    youtube: "-", 
+    twitch: "https://twitch.tv/PirataMC_", 
+    description: "Il capitano indiscusso dei mari di Minecraft e maestro delle avventure oceaniche. La sua passione per l'esplorazione e la scoperta lo porta costantemente alla ricerca di nuovi tesori, dungeon nascosti e battaglie epiche contro mostri marini. Streamer carismatico che trasforma ogni sessione di gioco in un'esperienza narrativa coinvolgente. La sua energia contagiosa e il spirito avventuroso ispirano la community a esplorare oltre i confini conosciuti.", 
+    bgColor: "#212222" 
   },
   { 
     name: "a'", 
@@ -64,31 +73,22 @@ const membersData: Member[] = [
     bgColor: "#a2def0" 
   },
   { 
-    name: "Pirata91", 
+    name: "il_Muffin", 
     rank: "Co-Founder", 
-    discord: "pirata910216", 
-    youtube: "-", 
-    twitch: "https://twitch.tv/PirataMC_", 
-    description: "Il capitano indiscusso dei mari di Minecraft e maestro delle avventure oceaniche. La sua passione per l'esplorazione e la scoperta lo porta costantemente alla ricerca di nuovi tesori, dungeon nascosti e battaglie epiche contro mostri marini. Streamer carismatico che trasforma ogni sessione di gioco in un'esperienza narrativa coinvolgente. La sua energia contagiosa e il spirito avventuroso ispirano la community a esplorare oltre i confini conosciuti.", 
-    bgColor: "#212222" 
+    discord: "for_muffin", 
+    youtube: "https://youtube.com/@il_Muffin", 
+    twitch: "-", 
+    description: "L'amministratore che incarna l'autorità giusta e necessaria. Mantiene l'ordine con mano ferma dove regna il caos assoluto, intervenendo sempre con fairness e ragionevolezza. La sua presenza è garanzia di regole rispettate e ambiente sano per tutti. Content creator rispettato che porta valore attraverso tutorial, guide e gameplay di qualità. La sua esperienza lo rende un mentore naturale per i nuovi membri della community.", 
+    bgColor: "#440c0c" 
   },
   { 
     name: "gabryX2", 
-    rank: "Co-Founder", 
+    rank: "Admin", 
     discord: "270984", 
     youtube: "https://youtube.com/@gabryX2-mc", 
     twitch: "-", 
     description: "Architetto visionario e stratega militare. Trasforma semplici blocchi in opere d'arte monumentali e basi fortificate inespugnabili. La sua competenza in redstone e meccaniche di gioco è leggendaria nella community. Crea strutture che non sono solo belle da vedere ma funzionali e strategicamente perfectte. Il suo approccio ingegneristico al gioco offre nuove prospettive su come Minecraft possa essere usato come strumento creativo e tattico.", 
     bgColor: "#36a336" 
-  },
-  { 
-    name: "MainSciamn", 
-    rank: "Admin", 
-    discord: "sci4mn_shot", 
-    youtube: "https://youtube.com/@MainSciamn", 
-    twitch: "-", 
-    description: "L'amministratore che incarna l'autorità giusta e necessaria. Mantiene l'ordine con mano ferma dove regna il caos assoluto, intervenendo sempre con fairness e ragionevolezza. La sua presenza è garanzia di regole rispettate e ambiente sano per tutti. Content creator rispettato che porta valore attraverso tutorial, guide e gameplay di qualità. La sua esperienza lo rende un mentore naturale per i nuovi membri della community.", 
-    bgColor: "#440c0c" 
   },
   { 
     name: "Zeph", 
@@ -107,15 +107,6 @@ const membersData: Member[] = [
     twitch: "-", 
     description: "L'occhio vigile della chat che non lascia sfuggire nulla. Ogni messaggio, ogni interazione, ogni potenziale problema viene monitorato e gestito con professionalità. La sua attenzione ai dettagli e la costante presenza fanno di lui un moderatore indispensabile. Cura particolarmente l'atmosfera della community, intervenendo tempestivamente per mantenere conversazioni costruttive e rispettose. Disponibile e cortese, rappresenta il perfetto equilibrio tra autorità e amichevolezza.", 
     bgColor: "#dddcdc" 
-  },
-  { 
-    name: "NotAlexAgain", 
-    rank: "Mod", 
-    discord: "alemasterproyt", 
-    youtube: "https://youtube.com/@NotAlexAgain", 
-    twitch: "-", 
-    description: "Il moderatore sempre presente che incarna l'affidabilità totale. Quando serve supporto, consiglio o una mano, è sempre tra i primi a rispondere. La sua costanza e dedizione fanno di lui un pilastro fondamentale dello staff. Cura particolarmente l'integrazione dei nuovi membri, assicurandosi che ogni persona si senta benvenuta e parte della famiglia Broski. Content creator creativo che aggiunge valore attraverso contenuti originali e coinvolgenti.", 
-    bgColor: "#7fd1b2" 
   }
 ];
 
@@ -245,34 +236,25 @@ const SocialHero = ({ activeFilter, onFilterChange, visibleCount, t }: { activeF
 
 const MemberCard = ({ member, index, t }: { member: Member; index: number; t: (key: string) => string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(`https://api.dicebear.com/7.x/initials/svg?seed=${member.discord}&backgroundColor=2E5BFF,FF1F44&textColor=ffffff`);
 
-  // Otteniamo l'handle di YouTube dal link se disponibile
-  React.useEffect(() => {
-    const fetchYoutubeData = async () => {
-      const handle = getYoutubeHandle(member.youtube);
-      if (!handle) return;
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-      if (!apiKey) return;
+  // Hardcoded avatar URLs per member
+  const avatarUrlMap: Record<string, string> = {
+    // member avatars format?
+    // 'memberName': 'https://example.com/avatar.jpg',
+    'zZalix': '/social/zZalix.jpg',
+    'un1verso': '/social/un1pfp.png',
+    'a\'': '/social/a\'.webp',
+    'il_Muffin': '/social/muffin.webp',
+    'Pirata91': '/social/pirata91.webp',
+    'gabryX2': '/social/gabryX2.webp',
+    'Zeph': '/social/zeph.webp',
+    'Zlem': '/social/zlem.webp'
+  };
 
-      try {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet,brandingSettings&forHandle=@${handle}&key=${apiKey}`);
-        const data = await response.json();
-
-        if (data.items && data.items.length > 0) {
-          const channel = data.items[0];
-          
-          if (channel.snippet?.thumbnails?.high?.url) {
-            setAvatarUrl(channel.snippet.thumbnails.high.url);
-          }
-        }
-      } catch (error) {
-        console.error(`Errore nel caricamento dei dati YouTube per ${member.name}:`, error);
-      }
-    };
-
-    fetchYoutubeData();
-  }, [member.youtube, member.name]);
+  const [avatarUrl, setAvatarUrl] = useState(
+    avatarUrlMap[member.name] || 
+    `https://api.dicebear.com/7.x/initials/svg?seed=${member.discord}&backgroundColor=2E5BFF,FF1F44&textColor=ffffff`
+  );
 
   const socialCount = [member.discord, member.youtube, member.twitch].filter((item) => item !== '-').length;
 
@@ -496,7 +478,7 @@ const MemberCard = ({ member, index, t }: { member: Member; index: number; t: (k
                   <img 
                     src={getMemberImage(member)} 
                     alt={`Render di ${member.name}`}
-                    className="relative z-10 h-[140%] origin-bottom translate-y-40 object-contain drop-shadow-[10px_10px_0_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-105 sm:h-[150%] lg:translate-y-48"
+                    className="relative z-0 h-[75%] w-[75%] origin-bottom translate-y-28 object-contain drop-shadow-[10px_10px_0_rgba(0,0,0,0.5)] transition-transform duration-500 group-hover:scale-105 sm:h-[90%] sm:w-[90%] lg:translate-y-36"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 </div>

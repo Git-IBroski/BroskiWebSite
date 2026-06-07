@@ -60,17 +60,17 @@ function App() {
                   <Route path="/progetti" element={<Projects />} />
                   <Route path="/wiki" element={<Wiki />} />
                   <Route path="/countdown" element={<RequireAuth><RequireAdmin><Countdown /></RequireAdmin></RequireAuth>} />
-                  <Route path="/store" element={<RequireAuth><Store /></RequireAuth>} />
+                  <Route path="/store" element={<RequireAuth><RequireAdmin><Store /></RequireAdmin></RequireAuth>} />
                   <Route path="/contatti" element={<Contacts />} />
                   <Route path="/mods" element={<Mods />} />
                   <Route path="/mods/upload" element={<RequireAuth><ModUpload /></RequireAuth>} />
                   <Route path="/mods/my" element={<RequireAuth><MyMods /></RequireAuth>} />
-                  <Route path="/mods/:id" element={<RequireAuth><ModDetail /></RequireAuth>} />
+                  <Route path="/mods/:id" element={<ModDetail />} />
                   <Route path="/mods/:id/edit" element={<RequireAuth><ModEdit /></RequireAuth>} />
                   <Route path="/mods/:id/version/new" element={<RequireAuth><ModVersionCreate /></RequireAuth>} />
                   <Route path="/mods/followed" element={<RequireAuth><FollowedCreators /></RequireAuth>} />
                   <Route path="/mods/saved" element={<RequireAuth><SavedProjects /></RequireAuth>} />
-                  <Route path="/mods/creator/:creatorId" element={<RequireAuth><CreatorProfile /></RequireAuth>} />
+                  <Route path="/mods/creator/:creatorId" element={<CreatorProfile />} />
                   <Route path="/progetti/idea" element={<RequireAuth><IdeaSubmit /></RequireAuth>} />
                   <Route path="/mie-idee" element={<RequireAuth><MyIdeas /></RequireAuth>} />
                   <Route path="/admin/setup" element={<RequireAuth><AdminSetup /></RequireAuth>} />
