@@ -62,19 +62,21 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
         const result = await response.json();
         
         if (result.status === 'ok' && result.items && result.items.length > 0) {
+          // Prima prova a filtrare shorts/live, se non trova nulla usa il primo video disponibile
           const longVideos = result.items.filter((item: any) => {
             const isShort = item.link.includes('/shorts/');
-            const titleLower = item.title.toLowerCase();
-            const isLive = titleLower.includes('live') || titleLower.includes('diretta') || item.title.includes('🔴');
-            return !isShort && !isLive;
+            return !isShort;
           });
           
-          if (longVideos.length > 0) {
-            const latestVideo = longVideos[0];
+          const videoToUse = longVideos.length > 0 ? longVideos[0] : result.items[0];
+          
+          if (videoToUse) {
+            // Prova maxresdefault, con fallback a hqdefault
+            const maxRes = videoToUse.thumbnail?.replace('hqdefault.jpg', 'maxresdefault.jpg') || videoToUse.thumbnail;
             setVideo({
-              title: latestVideo.title,
-              link: latestVideo.link,
-              thumbnail: latestVideo.thumbnail.replace('hqdefault.jpg', 'maxresdefault.jpg')
+              title: videoToUse.title,
+              link: videoToUse.link,
+              thumbnail: maxRes
             });
           }
         }
@@ -87,7 +89,7 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
   }, [data.channelId, data.name]);
 
   return (
-    <div className="group relative flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-2 hover:shadow-[11px_11px_0px_0px_rgba(0,0,0,1)]">
+    <div className={`group relative flex min-h-[420px] flex-col overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-5 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-2 hover:shadow-[11px_11px_0px_0px_rgba(0,0,0,1)]`}>
       <div className={`absolute -right-12 -top-12 h-32 w-32 rounded-full border-4 border-black opacity-80 transition-transform duration-700 group-hover:scale-125 ${data.colorClass}`}></div>
       <div className="relative mb-5 h-35 overflow-hidden rounded-3xl border-[3px] border-black bg-surface-container-lowest shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
         <img 
@@ -95,7 +97,13 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
           alt={video?.title || data.name} 
           src={video?.thumbnail || data.defaultImage} 
           onError={(e) => {
-            e.currentTarget.src = data.defaultImage;
+            // Fallback: prova hqdefault se maxresdefault fallisce, poi defaultImage
+            const src = e.currentTarget.src;
+            if (src.includes('maxresdefault')) {
+              e.currentTarget.src = src.replace('maxresdefault.jpg', 'hqdefault.jpg');
+            } else {
+              e.currentTarget.src = data.defaultImage;
+            }
           }}
         />
         {video && (
@@ -152,7 +160,12 @@ const Idols: React.FC = () => {
           {t('idols.description')}
         </p>
       </div>
-      <div className="relative z-10 grid grid-cols-1 gap-margin md:grid-cols-2 lg:grid-cols-4">
+      <div className={`relative z-10 grid grid-cols-1 gap-margin ${
+        idolsData.length === 1 ? 'md:grid-cols-1' :
+        idolsData.length === 2 ? 'md:grid-cols-2' :
+        idolsData.length === 3 ? 'md:grid-cols-3' :
+        'md:grid-cols-2 lg:grid-cols-4'
+      }`}>
         {idolsData.map((idol) => (
           <IdolCard key={idol.name} data={idol} />
         ))}
