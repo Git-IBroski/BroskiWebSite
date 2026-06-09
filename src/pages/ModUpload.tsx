@@ -33,6 +33,33 @@ const ModUpload: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
+  // Blocca upload mod se IGN non verificato
+  if (profile && !profile.ign_verified) {
+    return (
+      <PageAnimator className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl border-4 border-black bg-yellow-500/20 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+              <span className="material-symbols-outlined text-3xl text-yellow-400">verified_user</span>
+            </div>
+            <h1 className="font-headline-lg text-[28px] uppercase leading-none text-yellow-400">
+              IGN NON VERIFICATO
+            </h1>
+            <p className="font-body-sm text-on-surface-variant">
+              Il tuo Minecraft username deve essere verificato da un Owner prima di poter pubblicare mod.
+            </p>
+            <Link
+              to="/mods"
+              className="w-full rounded-2xl border-[3px] border-black bg-surface-bright px-6 py-3 text-center font-headline-md text-[16px] text-white shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1"
+            >
+              TORNA ALLE MOD
+            </Link>
+          </div>
+        </div>
+      </PageAnimator>
+    );
+  }
+
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [description, setDescription] = useState('');

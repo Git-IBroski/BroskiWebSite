@@ -168,7 +168,7 @@ const AdminPanel: React.FC = () => {
   const [contactsSaving, setContactsSaving] = useState(false);
 
   // Mods review state
-  const [pendingMods, setPendingMods] = useState<{id: string; title: string; author_name: string; category: string; status: string; created_at: string}[]>([]);
+  const [pendingMods, setPendingMods] = useState<{id: string; title: string; author_name: string; author_id: string; category: string; status: string; created_at: string}[]>([]);
   const [modsLoading, setModsLoading] = useState(false);
 
   // Ideas state
@@ -250,7 +250,7 @@ const AdminPanel: React.FC = () => {
     setModsLoading(true);
     const { data, error } = await supabase
       .from('mods')
-      .select('id, title, author_name, category, status, created_at')
+      .select('id, title, author_name, author_id, category, status, created_at')
       .in('status', ['pending', 'on_hold'])
       .order('created_at', { ascending: true });
     if (!error && data) setPendingMods(data);
@@ -1273,8 +1273,11 @@ const AdminPanel: React.FC = () => {
                       </a>
                       <button
                         onClick={() => handleModAction(mod.id, 'approved')}
-                        className="rounded-lg border-[2px] border-black bg-green-600 p-2 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5"
-                        title="Approva"
+                        disabled={profile?.admin_rank === 'admin' && mod.author_id === profile?.id}
+                        className={`rounded-lg border-[2px] border-black bg-green-600 p-2 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 ${
+                          profile?.admin_rank === 'admin' && mod.author_id === profile?.id ? 'opacity-40 cursor-not-allowed' : ''
+                        }`}
+                        title={profile?.admin_rank === 'admin' && mod.author_id === profile?.id ? 'Non puoi approvare le tue mod' : 'Approva'}
                       >
                         <span className="material-symbols-outlined text-[18px]">check</span>
                       </button>

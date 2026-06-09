@@ -11,6 +11,7 @@ interface ProfileData {
   display_name: string | null;
   email: string;
   role: 'user' | 'admin';
+  ign_verified: boolean;
   bio: string | null;
   created_at: string;
 }
@@ -96,7 +97,7 @@ const Profile: React.FC = () => {
           <div className="relative px-6 pb-6 sm:px-8">
             <div className="-mt-12 flex flex-col items-center sm:-mt-14 sm:flex-row sm:items-end sm:gap-6">
               <img
-                src={`https://mc-heads.net/avatar/${profileData.minecraft_username}/128`}
+                src={profileData.ign_verified ? `https://mc-heads.net/avatar/${profileData.minecraft_username}/128` : '/profilepng/bde5a0ac04e56a64.png'}
                 alt={profileData.minecraft_username || ''}
                 className="h-24 w-24 rounded-2xl border-[4px] border-black bg-surface-container shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] sm:h-28 sm:w-28"
               />
@@ -110,6 +111,11 @@ const Profile: React.FC = () => {
                   }`}>
                     {profileData.role.toUpperCase()}
                   </span>
+                  {!profileData.ign_verified && (
+                    <span className="rounded-lg border border-yellow-500 bg-yellow-500/20 px-2 py-0.5 font-label-caps text-[10px] text-yellow-400">
+                      IGN NON VERIFICATO
+                    </span>
+                  )}
                   <span className="font-body-sm text-[12px] text-on-surface-variant">
                     Membro dal {joinDate}
                   </span>
