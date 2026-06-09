@@ -58,27 +58,66 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
   useEffect(() => {
     const fetchLatestVideo = async () => {
       try {
+        // Primo tentativo: RSS feed
         const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=https://www.youtube.com/feeds/videos.xml?channel_id=${data.channelId}`);
         const result = await response.json();
         
         if (result.status === 'ok' && result.items && result.items.length > 0) {
-          // Prima prova a filtrare shorts/live, se non trova nulla usa il primo video disponibile
           const longVideos = result.items.filter((item: any) => {
             const isShort = item.link.includes('/shorts/');
             return !isShort;
           });
           
-          const videoToUse = longVideos.length > 0 ? longVideos[0] : result.items[0];
-          
-          if (videoToUse) {
-            // Prova maxresdefault, con fallback a hqdefault
-            const maxRes = videoToUse.thumbnail?.replace('hqdefault.jpg', 'maxresdefault.jpg') || videoToUse.thumbnail;
+          if (longVideos.length > 0) {
+            const latestVideo = longVideos[0];
+            const maxRes = latestVideo.thumbnail?.replace('hqdefault.jpg', 'maxresdefault.jpg') || latestVideo.thumbnail;
             setVideo({
-              title: videoToUse.title,
-              link: videoToUse.link,
+              title: latestVideo.title,
+              link: latestVideo.link,
               thumbnail: maxRes
             });
+            return; // Trovato, finito
           }
+        }
+
+        // Fallback: YouTube Data API v3 (filtra solo video lunghi)
+        const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
+        if (!apiKey) return;
+
+        // Step 1: cerca i video del canale
+        const searchRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=id&channelId=${data.channelId}&order=date&type=video&maxResults=10&key=${apiKey}`
+        );
+        const searchData = await searchRes.json();
+        if (!searchData.items || searchData.items.length === 0) return;
+
+        const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
+
+        // Step 2: ottieni i dettagli (durata) per filtrare shorts
+        const detailsRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=${videoIds}&key=${apiKey}`
+        );
+        const detailsData = await detailsRes.json();
+        if (!detailsData.items) return;
+
+        // Filtra video con durata > 60 secondi (non shorts)
+        const longVideo = detailsData.items.find((item: any) => {
+          const duration = item.contentDetails.duration; // formato ISO 8601: PT1M30S, PT15M, etc.
+          const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+          if (!match) return false;
+          const hours = parseInt(match[1] || '0');
+          const minutes = parseInt(match[2] || '0');
+          const seconds = parseInt(match[3] || '0');
+          const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+          return totalSeconds > 60;
+        });
+
+        if (longVideo) {
+          setVideo({
+            title: longVideo.snippet.title,
+            link: `https://www.youtube.com/watch?v=${longVideo.id}`,
+            thumbnail: longVideo.snippet.thumbnails?.maxres?.url || longVideo.snippet.thumbnails?.high?.url || longVideo.snippet.thumbnails?.medium?.url
+          });
         }
       } catch (error) {
         console.error(`Error loading video for ${data.name}:`, error);
