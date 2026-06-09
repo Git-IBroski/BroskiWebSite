@@ -53,6 +53,12 @@ const idolsData: IdolData[] = [
   }
 ];
 
+// Estrae l'ID video da un URL YouTube
+const extractVideoId = (url: string): string | null => {
+  const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : null;
+};
+
 const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
   const { t } = useLanguage();
   const [video, setVideo] = useState<YoutubeVideo | null>(null);
@@ -84,7 +90,20 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
 
         // Fallback: YouTube Data API v3 con filtro videoDuration
         const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-        if (!apiKey) return;
+        if (!apiKey) {
+          // Se non c'è API key, usa il fallbackVideoUrl direttamente
+          if (data.fallbackVideoUrl) {
+            const videoId = extractVideoId(data.fallbackVideoUrl);
+            if (videoId) {
+              setVideo({
+                title: data.name,
+                link: data.fallbackVideoUrl,
+                thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+              });
+            }
+          }
+          return;
+        }
 
         // Cerca video con durata "medium" (4-20 min) o "long" (20+ min)
         for (const duration of ['medium', 'long'] as const) {
@@ -103,6 +122,18 @@ const IdolCard: React.FC<{ data: IdolData }> = ({ data }) => {
               thumbnail: thumbnail
             });
             return;
+          }
+        }
+
+        // Ultimo fallback: usa fallbackVideoUrl con thumbnail generata
+        if (data.fallbackVideoUrl) {
+          const videoId = extractVideoId(data.fallbackVideoUrl);
+          if (videoId) {
+            setVideo({
+              title: data.name,
+              link: data.fallbackVideoUrl,
+              thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+            });
           }
         }
       } catch (error) {
