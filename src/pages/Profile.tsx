@@ -11,6 +11,7 @@ interface ProfileData {
   display_name: string | null;
   email: string;
   role: 'user' | 'admin';
+  admin_rank: 'owner' | 'admin' | 'mod' | 'tier_tester' | null;
   ign_verified: boolean;
   bio: string | null;
   created_at: string;
@@ -23,7 +24,7 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ display_name: '', bio: '', gd_username: '' });
+  const [form, setForm] = useState({ display_name: '', minecraft_username: '', bio: '', gd_username: '' });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,6 +39,7 @@ const Profile: React.FC = () => {
         setProfileData(p);
         setForm({
           display_name: p.display_name || '',
+          minecraft_username: p.minecraft_username || '',
           bio: (p as unknown as Record<string, string>).bio || '',
           gd_username: p.gd_username || '',
         });
@@ -50,15 +52,32 @@ const Profile: React.FC = () => {
   const handleSave = async () => {
     if (!profile) return;
     setSaving(true);
+    const isOwner = profile.admin_rank === 'owner';
+    const mcChanged = form.minecraft_username !== (profileData?.minecraft_username || '');
+    
+    const updateData: Record<string, unknown> = {
+      display_name: form.display_name || null,
+      minecraft_username: form.minecraft_username || null,
+      bio: form.bio || null,
+      gd_username: form.gd_username || null,
+    };
+    
+    // Se un non-owner cambia il MC username, resetta la verifica
+    if (mcChanged && !isOwner) {
+      updateData.ign_verified = false;
+    }
+    
     await supabase
       .from('profiles')
-      .update({
-        display_name: form.display_name || null,
-        bio: form.bio || null,
-        gd_username: form.gd_username || null,
-      })
+      .update(updateData)
       .eq('id', profile.id);
-    setProfileData((prev) => prev ? { ...prev, ...form } : prev);
+    setProfileData((prev) => prev ? { 
+      ...prev, 
+      display_name: form.display_name || null,
+      minecraft_username: form.minecraft_username || null,
+      gd_username: form.gd_username || null,
+      ign_verified: (mcChanged && !isOwner) ? false : (prev.ign_verified),
+    } : prev);
     setEditing(false);
     setSaving(false);
   };
@@ -155,6 +174,18 @@ const Profile: React.FC = () => {
               ) : (
                 <div className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">
+                        Minecraft Username
+                        {profile.admin_rank !== 'owner' && <span className="text-yellow-400 ml-1">(cambio = ri-verifica)</span>}
+                      </label>
+                      <input
+                        type="text"
+                        value={form.minecraft_username}
+                        onChange={(e) => setForm({ ...form, minecraft_username: e.target.value })}
+                        className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                      />
+                    </div>
                     <div>
                       <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">Display Name</label>
                       <input
