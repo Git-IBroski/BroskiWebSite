@@ -40,6 +40,8 @@ export interface ProfileCustomization {
   border_radius: string;
   shadow_color: string;
   custom_css: string | null;
+  custom_html: string | null;
+  editor_mode: string;
   layout: string;
   sections_order: string[];
 }
@@ -102,6 +104,29 @@ const Profile: React.FC = () => {
   }
   if (editing && canEdit) {
     return <ProfileEditor profileData={profileData} onSave={(updated) => { setProfileData(updated); setEditing(false); }} onCancel={() => setEditing(false)} />;
+  }
+
+  // MODE: Code — render custom HTML directly
+  if (profileData.editor_mode === 'code' && profileData.custom_html) {
+    const pageBgStyle: React.CSSProperties = profileData.page_bg_gradient
+      ? { background: profileData.page_bg_gradient.includes(',') ? `linear-gradient(135deg, ${profileData.page_bg_gradient})` : profileData.page_bg_gradient }
+      : profileData.page_bg_color
+        ? { background: profileData.page_bg_color }
+        : { background: '#0a0a0a' };
+
+    return (
+      <div className="min-h-screen px-4 py-8 sm:px-8" style={pageBgStyle}>
+        {canEdit && (
+          <button onClick={() => setEditing(true)}
+            className="mb-4 flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-sm font-bold text-white backdrop-blur transition-all hover:scale-105">
+            <span className="material-symbols-outlined text-[18px]">code</span>
+            MODIFICA CODICE
+          </button>
+        )}
+        {profileData.custom_css && <style>{`.profile-custom { ${profileData.custom_css} }`}</style>}
+        <div className="profile-custom mx-auto max-w-4xl" dangerouslySetInnerHTML={{ __html: profileData.custom_html }} />
+      </div>
+    );
   }
 
   const accent = profileData.accent_color || '#2563eb';

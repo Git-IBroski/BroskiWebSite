@@ -28,13 +28,16 @@ const SHAPES = [
 
 const THEMES = [
   { value: 'custom', label: 'Custom', accent: '' },
-  { value: 'neon', label: 'Neon', accent: '#00ff88' },
-  { value: 'hacker', label: 'Dark Hacker', accent: '#22c55e' },
-  { value: 'retro', label: 'Retro Pixel', accent: '#f97316' },
-  { value: 'ocean', label: 'Ocean', accent: '#06b6d4' },
-  { value: 'royal', label: 'Royal Purple', accent: '#a855f7' },
-  { value: 'fire', label: 'Fire', accent: '#ef4444' },
-  { value: 'minimal', label: 'Minimal', accent: '#94a3b8' },
+  { value: 'neon', label: 'Neon', accent: '#00ff88', bg: '#0a0a0a', card: '#0d1117', border: '#00ff88' },
+  { value: 'hacker', label: 'Dark Hacker', accent: '#22c55e', bg: '#000000', card: '#0a0f0a', border: '#22c55e' },
+  { value: 'retro', label: 'Retro Pixel', accent: '#f97316', bg: '#1a0a00', card: '#2d1a0a', border: '#f97316' },
+  { value: 'ocean', label: 'Ocean', accent: '#06b6d4', bg: '#0a1628', card: '#0c1e3a', border: '#06b6d4' },
+  { value: 'royal', label: 'Royal Purple', accent: '#a855f7', bg: '#0f0520', card: '#1a0a30', border: '#a855f7' },
+  { value: 'fire', label: 'Fire', accent: '#ef4444', bg: '#1a0505', card: '#2d0a0a', border: '#ef4444' },
+  { value: 'minimal', label: 'Minimal', accent: '#94a3b8', bg: '#f8fafc', card: '#ffffff', border: '#e2e8f0' },
+  { value: 'galaxy', label: 'Galaxy', accent: '#8b5cf6', bg: '#030014,#1e1b4b,#030014', card: '#0f0a2e', border: '#6366f1' },
+  { value: 'sunset', label: 'Sunset', accent: '#f59e0b', bg: '#1a0a00,#7c2d12,#1a0a00', card: '#2d1a0a', border: '#f59e0b' },
+  { value: 'ice', label: 'Ice', accent: '#22d3ee', bg: '#0c1929', card: '#0e2a42', border: '#22d3ee' },
 ];
 
 const INTEREST_OPTIONS = [
@@ -89,6 +92,8 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
     interests: profileData.interests || [],
     active_badges: profileData.active_badges || [],
     theme: profileData.theme || 'custom',
+    editor_mode: profileData.editor_mode || 'simple',
+    custom_html: profileData.custom_html || '',
   });
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -97,7 +102,15 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
   const handleThemeChange = (themeValue: string) => {
     const theme = THEMES.find(t => t.value === themeValue);
     if (theme && theme.accent) {
-      setForm({ ...form, theme: themeValue, accent_color: theme.accent });
+      setForm({ 
+        ...form, 
+        theme: themeValue, 
+        accent_color: theme.accent,
+        page_bg_color: theme.bg?.includes(',') ? '' : (theme.bg || ''),
+        page_bg_gradient: theme.bg?.includes(',') ? theme.bg : '',
+        card_background: theme.card || '',
+        border_color: theme.border || '#000000',
+      });
     } else {
       setForm({ ...form, theme: themeValue });
     }
@@ -177,6 +190,8 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
         border_radius: form.border_radius,
         shadow_color: form.shadow_color,
         custom_css: form.custom_css || null,
+        custom_html: form.custom_html || null,
+        editor_mode: form.editor_mode,
         social_links: socialLinks,
         interests: form.interests,
         active_badges: form.active_badges,
@@ -213,9 +228,47 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
             </button>
           </div>
 
+          {/* Mode Switch */}
+          <div className="mb-6 flex items-center gap-3 rounded-xl border-[3px] border-black bg-surface-container-high p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <span className="font-label-caps text-[11px] text-on-surface-variant">MODALITÀ:</span>
+            <div className="flex items-center gap-1 rounded-lg border-2 border-black bg-black p-1">
+              <button onClick={() => setForm({ ...form, editor_mode: 'simple' })}
+                className={`rounded px-3 py-1.5 font-label-caps text-[10px] transition-all ${form.editor_mode === 'simple' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}>
+                🎨 SEMPLICE
+              </button>
+              <button onClick={() => setForm({ ...form, editor_mode: 'code' })}
+                className={`rounded px-3 py-1.5 font-label-caps text-[10px] transition-all ${form.editor_mode === 'code' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}>
+                💻 CODICE
+              </button>
+            </div>
+          </div>
+
           {error && <p className="mb-4 rounded-lg bg-error/20 p-3 text-sm text-error">{error}</p>}
 
-          <div className="space-y-6">
+          {form.editor_mode === 'code' ? (
+            /* CODE MODE */
+            <div className="space-y-6">
+              <Section title="HTML PERSONALIZZATO">
+                <p className="mb-2 text-[11px] text-on-surface-variant">Scrivi il tuo HTML per la card del profilo. Usa classi Tailwind o stili inline. L'header e il footer del sito resteranno sempre visibili.</p>
+                <textarea value={form.custom_html} onChange={e => setForm({ ...form, custom_html: e.target.value })} rows={20}
+                  placeholder={'<div style="padding: 2rem; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 1rem; color: white;">\n  <h1 style="font-size: 3rem;">Il mio profilo</h1>\n  <p>Scrivi quello che vuoi qui...</p>\n  <img src="https://mc-heads.net/avatar/TUO_NOME/128" />\n</div>'}
+                  className="w-full rounded-xl border-[3px] border-black bg-black px-4 py-3 text-xs text-green-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono leading-relaxed" />
+              </Section>
+              <Section title="CSS PERSONALIZZATO">
+                <textarea value={form.custom_css} onChange={e => setForm({ ...form, custom_css: e.target.value })} rows={6}
+                  placeholder="/* CSS applicato a .profile-custom */\ncolor: white;\nfont-family: monospace;"
+                  className="w-full rounded-xl border-[3px] border-black bg-black px-4 py-3 text-xs text-blue-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono leading-relaxed" />
+              </Section>
+              <Section title="SFONDO PAGINA">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Colore sfondo pagina" value={form.page_bg_color} onChange={v => setForm({ ...form, page_bg_color: v })} placeholder="#0a0a0a" />
+                  <Field label="Gradient sfondo (hex,hex)" value={form.page_bg_gradient} onChange={v => setForm({ ...form, page_bg_gradient: v })} placeholder="#0a0a0a,#1a1a2e" />
+                </div>
+              </Section>
+            </div>
+          ) : (
+            /* SIMPLE MODE */
+            <div className="space-y-6">
             {/* Theme */}
             <Section title="TEMA">
               <div className="flex flex-wrap gap-2">
@@ -349,6 +402,7 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
               <p className="mt-1 text-[10px] text-on-surface-variant">{form.active_badges.length}/3 selezionati</p>
             </Section>
           </div>
+          )}
 
           {/* Save */}
           <div className="mt-8 flex gap-3">
