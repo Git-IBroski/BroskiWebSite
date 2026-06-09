@@ -177,7 +177,7 @@ const AdminPanel: React.FC = () => {
   const [ideaDropdownOpen, setIdeaDropdownOpen] = useState<string | null>(null);
 
   // Users state (only for owners)
-  const [allUsers, setAllUsers] = useState<{id: string; minecraft_username: string | null; gd_username: string | null; email: string; role: string; admin_rank: string | null; ign_verified: boolean; created_at: string}[]>([]);
+  const [allUsers, setAllUsers] = useState<{id: string; minecraft_username: string | null; gd_username: string | null; display_name: string | null; email: string; role: string; admin_rank: string | null; ign_verified: boolean; created_at: string}[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
   const [usersPage, setUsersPage] = useState(0);
@@ -274,7 +274,7 @@ const AdminPanel: React.FC = () => {
     setUsersLoading(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, minecraft_username, gd_username, email, role, admin_rank, ign_verified, created_at')
+      .select('id, minecraft_username, gd_username, display_name, email, role, admin_rank, ign_verified, created_at')
       .order('created_at', { ascending: false });
     if (!error && data) setAllUsers(data);
     setUsersLoading(false);
@@ -1397,10 +1397,22 @@ const AdminPanel: React.FC = () => {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-container border-t-transparent" />
               </div>
             ) : (() => {
-              const filtered = allUsers.filter(u => {
-                const q = userSearch.toLowerCase();
-                return !q || (u.minecraft_username?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
-              });
+              const RANK_ORDER: Record<string, number> = { owner: 0, admin: 1, mod: 2, tier_tester: 3 };
+              const filtered = allUsers
+                .filter(u => {
+                  // Nascondi utenti soft-deleted
+                  if (u.display_name === '[ELIMINATO]') return false;
+                  const q = userSearch.toLowerCase();
+                  return !q || (u.minecraft_username?.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+                })
+                .sort((a, b) => {
+                  // Ordina per rank: owner > admin > mod > tier_tester > user
+                  const rankA = a.admin_rank ? (RANK_ORDER[a.admin_rank] ?? 99) : 99;
+                  const rankB = b.admin_rank ? (RANK_ORDER[b.admin_rank] ?? 99) : 99;
+                  if (rankA !== rankB) return rankA - rankB;
+                  // A parità di rank, ordina per data creazione (più recenti prima)
+                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                });
               const totalPages = Math.ceil(filtered.length / USERS_PER_PAGE);
               const paged = filtered.slice(usersPage * USERS_PER_PAGE, (usersPage + 1) * USERS_PER_PAGE);
 
