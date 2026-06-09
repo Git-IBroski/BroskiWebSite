@@ -12,6 +12,7 @@ interface NewsItem {
   content: string;
   title_en: string | null;
   content_en: string | null;
+  banner_url: string | null;
   category: string;
   variant: 'default' | 'urgent' | 'event';
   icon: string;
@@ -180,6 +181,7 @@ const AdminPanel: React.FC = () => {
     content: '',
     title_en: '',
     content_en: '',
+    banner_url: '',
     category: 'GENERALE',
     variant: 'default' as 'default' | 'urgent' | 'event',
     icon: 'newspaper',
@@ -316,6 +318,7 @@ const AdminPanel: React.FC = () => {
       content: newsForm.content,
       title_en: newsForm.title_en || null,
       content_en: newsForm.content_en || null,
+      banner_url: newsForm.banner_url || null,
       category: newsForm.category,
       variant: newsForm.variant,
       icon: newsForm.icon,
@@ -335,6 +338,7 @@ const AdminPanel: React.FC = () => {
       content: '',
       title_en: '',
       content_en: '',
+      banner_url: '',
       category: 'GENERALE',
       variant: 'default',
       icon: 'newspaper',
@@ -358,6 +362,7 @@ const AdminPanel: React.FC = () => {
       content: item.content,
       title_en: item.title_en || '',
       content_en: item.content_en || '',
+      banner_url: item.banner_url || '',
       category: item.category,
       variant: item.variant,
       icon: item.icon,
@@ -603,6 +608,7 @@ const AdminPanel: React.FC = () => {
                     content: '',
                     title_en: '',
                     content_en: '',
+                    banner_url: '',
                     category: 'GENERALE',
                     variant: 'default',
                     icon: 'newspaper',
@@ -681,6 +687,23 @@ const AdminPanel: React.FC = () => {
                       <option value="urgent">Urgente (Blu)</option>
                       <option value="event">Evento (Secondario)</option>
                     </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">
+                      Banner URL <span className="text-on-surface-variant/50">(opzionale - link immagine)</span>
+                    </label>
+                    <input
+                      type="url"
+                      value={newsForm.banner_url}
+                      onChange={(e) => setNewsForm({ ...newsForm, banner_url: e.target.value })}
+                      placeholder="https://esempio.com/immagine.jpg"
+                      className="w-full rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    />
+                    {newsForm.banner_url && (
+                      <div className="mt-2 overflow-hidden rounded-lg border-2 border-black">
+                        <img src={newsForm.banner_url} alt="Preview" className="h-20 w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="mb-1 block font-label-caps text-[11px] text-on-surface-variant">Ordine</label>

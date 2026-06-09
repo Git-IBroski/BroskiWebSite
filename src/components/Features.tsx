@@ -8,6 +8,7 @@ interface FeatureItem {
   title: string;
   description: string;
   image?: string;
+  banner_url?: string | null;
   icon?: string;
   variant: 'primary' | 'blue' | 'secondary';
   colSpan: string;
@@ -19,6 +20,7 @@ interface NewsItem {
   content: string;
   title_en: string | null;
   content_en: string | null;
+  banner_url: string | null;
   category: string;
   variant: 'default' | 'urgent' | 'event';
   icon: string;
@@ -177,6 +179,7 @@ const Features: React.FC = () => {
         title: (language === 'en' && item.title_en) ? item.title_en : item.title,
         description: (language === 'en' && item.content_en) ? item.content_en : item.content,
         icon: item.icon,
+        banner_url: item.banner_url,
         variant: item.variant === 'urgent' ? 'blue' : item.variant === 'event' ? 'secondary' : 'primary',
         colSpan: 'md:col-span-6',
       }))
@@ -282,25 +285,32 @@ const Features: React.FC = () => {
                 className={`absolute h-[500px] w-[310px] transition-all duration-500 ease-in-out sm:h-[590px] sm:w-[420px] ${transformClass}`}
               >
                 {item.variant === 'primary' && item.image ? (
-                  <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-[2.5rem] border-[4px] border-black bg-surface-container shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]">
+                  <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-[2.5rem] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}>
                     <div className={`absolute inset-0 bg-black z-10 transition-opacity duration-500 pointer-events-none ${overlayClass}`} />
-                    <div className="relative h-64 shrink-0 overflow-hidden border-b-[4px] border-black bg-primary-container">
-                      <img className="w-full h-full object-cover opacity-60 mix-blend-multiply group-hover:scale-105 transition-transform duration-500" alt={item.title} src={item.image} />
+                    <div className="relative h-64 shrink-0 overflow-hidden border-b-[4px] border-black">
+                      <img className="w-full h-full object-cover opacity-60 mix-blend-luminosity group-hover:scale-105 transition-transform duration-500" alt={item.title} src={item.image} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a2e] via-transparent to-transparent" />
                       <div className="absolute left-4 top-4 rounded-2xl border-[2px] border-black bg-surface px-3 py-2 font-label-caps text-label-caps text-primary shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                         {item.number}
                       </div>
                     </div>
                     <div className="flex flex-1 flex-col gap-stack-sm overflow-y-auto p-6">
-                      <h3 className="font-headline-md text-[28px] leading-tight text-primary">{item.title}</h3>
-                      <p className="rounded-3xl border-2 border-black bg-surface-container-highest p-4 font-body-sm text-body-sm text-on-surface-variant">
+                      <h3 className="font-headline-md text-[28px] leading-tight text-blue-200">{item.title}</h3>
+                      <p className="rounded-3xl border-2 border-white/10 bg-white/5 p-4 font-body-sm text-body-sm text-blue-100/80">
                         {item.description}
                       </p>
                     </div>
                   </div>
                 ) : item.variant === 'blue' ? (
-                  <div className="group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[2.5rem] border-[4px] border-black bg-blue-600 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]">
+                  <div className="group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[2.5rem] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]" style={{ background: 'linear-gradient(160deg, #1e3a5f 0%, #2563eb 40%, #3b82f6 100%)' }}>
                     <div className={`absolute inset-0 bg-black z-10 transition-opacity duration-500 pointer-events-none ${overlayClass}`} />
-                    <div className="flex h-full flex-col gap-stack-sm overflow-y-auto p-6">
+                    {item.banner_url && (
+                      <>
+                        <img src={item.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-overlay" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e3a5f] via-[#1e3a5f]/60 to-transparent" />
+                      </>
+                    )}
+                    <div className="relative flex h-full flex-col gap-stack-sm overflow-y-auto p-6">
                       <div className="flex shrink-0 items-start justify-between">
                         <span className="material-symbols-outlined rounded-3xl border-[3px] border-black bg-black/20 p-3 text-[48px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{item.icon}</span>
                         <div className="rounded-2xl border-[2px] border-black bg-surface px-3 py-2 font-label-caps text-label-caps text-blue-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -309,26 +319,32 @@ const Features: React.FC = () => {
                       </div>
                       <div className="mt-auto shrink-0">
                         <h3 className="font-headline-md text-[30px] leading-tight text-white">{item.title}</h3>
-                        <p className="mt-3 rounded-3xl border-2 border-black bg-blue-700/60 p-4 font-body-sm text-body-sm text-blue-100">
+                        <p className="mt-3 rounded-3xl border-2 border-white/10 bg-black/20 p-4 font-body-sm text-body-sm text-blue-100">
                           {item.description}
                         </p>
                       </div>
                     </div>
                   </div>
                 ) : item.variant === 'secondary' ? (
-                  <div className="group relative flex h-full w-full flex-col justify-between overflow-y-auto rounded-[2.5rem] border-[4px] border-black bg-secondary-container p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]">
+                  <div className="group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[2.5rem] border-[4px] border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]" style={{ background: 'linear-gradient(145deg, #2d1b4e 0%, #4a1d6b 40%, #7c3aed 100%)' }}>
                     <div className={`absolute inset-0 bg-black z-10 transition-opacity duration-500 pointer-events-none ${overlayClass}`} />
-                    <div className="flex flex-col gap-stack-sm">
-                      <div className="inline-flex shrink-0 items-center gap-2 self-start rounded-2xl border-[2px] border-black bg-surface px-3 py-2 font-label-caps text-label-caps text-secondary-container shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                    {item.banner_url && (
+                      <>
+                        <img src={item.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25 mix-blend-overlay" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-[#2d1b4e]/80 via-transparent to-[#2d1b4e]" />
+                      </>
+                    )}
+                    <div className="relative flex flex-col gap-stack-sm">
+                      <div className="inline-flex shrink-0 items-center gap-2 self-start rounded-2xl border-[2px] border-black bg-surface px-3 py-2 font-label-caps text-label-caps text-purple-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{item.icon}</span>
                         {item.number}
                       </div>
-                      <h3 className="mt-4 shrink-0 font-headline-md text-[34px] uppercase leading-tight tracking-tight text-on-secondary-container">{item.title}</h3>
-                      <p className="shrink-0 rounded-3xl border-2 border-black bg-secondary-container-highest p-4 font-body-sm text-body-sm text-on-secondary">
+                      <h3 className="mt-4 shrink-0 font-headline-md text-[34px] uppercase leading-tight tracking-tight text-purple-100">{item.title}</h3>
+                      <p className="shrink-0 rounded-3xl border-2 border-white/10 bg-black/20 p-4 font-body-sm text-body-sm text-purple-200/80">
                         {item.description}
                       </p>
                     </div>
-                    <div className="mt-auto pt-4 flex-shrink-0">
+                    <div className="relative mt-auto pt-4 flex-shrink-0">
                       <button className="flex w-full items-center justify-center gap-2 rounded-2xl border-[3px] border-black bg-surface px-4 py-3 font-headline-md text-[16px] text-on-surface shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
                         {t('features.meet_members')}
                         <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
@@ -336,17 +352,23 @@ const Features: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-[2.5rem] border-[4px] border-black bg-surface-container shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]">
+                  <div className="group relative flex h-full w-full flex-col overflow-hidden rounded-[2.5rem] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform duration-300 hover:scale-[1.03]" style={{ background: 'linear-gradient(150deg, #1a2332 0%, #1e3a2e 40%, #065f46 100%)' }}>
                     <div className={`absolute inset-0 bg-black z-10 transition-opacity duration-500 pointer-events-none ${overlayClass}`} />
-                    <div className="flex h-full flex-col gap-stack-sm overflow-y-auto p-6">
+                    {item.banner_url && (
+                      <>
+                        <img src={item.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25 mix-blend-overlay" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a2332] via-[#1a2332]/60 to-transparent" />
+                      </>
+                    )}
+                    <div className="relative flex h-full flex-col gap-stack-sm overflow-y-auto p-6">
                       <div className="mb-4 flex shrink-0 items-start justify-between">
-                        <span className="material-symbols-outlined rounded-3xl border-[3px] border-black bg-primary-container p-3 text-[48px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{item.icon}</span>
-                        <div className="rounded-2xl border-[2px] border-black bg-surface px-3 py-2 font-label-caps text-label-caps text-primary shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                        <span className="material-symbols-outlined rounded-3xl border-[3px] border-black bg-emerald-600/50 p-3 text-[48px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">{item.icon}</span>
+                        <div className="rounded-2xl border-[2px] border-black bg-surface px-3 py-2 font-label-caps text-label-caps text-emerald-400 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                           {item.number}
                         </div>
                       </div>
-                      <h3 className="shrink-0 font-headline-md text-[28px] leading-tight text-primary">{item.title}</h3>
-                      <p className="shrink-0 rounded-3xl border-2 border-black bg-surface-container-highest p-4 font-body-sm text-body-sm text-on-surface-variant">
+                      <h3 className="shrink-0 font-headline-md text-[28px] leading-tight text-emerald-200">{item.title}</h3>
+                      <p className="shrink-0 rounded-3xl border-2 border-white/10 bg-black/20 p-4 font-body-sm text-body-sm text-emerald-100/80">
                         {item.description}
                       </p>
                     </div>
