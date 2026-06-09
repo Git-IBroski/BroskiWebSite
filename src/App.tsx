@@ -75,6 +75,7 @@ function App() {
                   <Route path="/progetti/idea" element={<RequireAuth><IdeaSubmit /></RequireAuth>} />
                   <Route path="/mie-idee" element={<RequireAuth><MyIdeas /></RequireAuth>} />
                   <Route path="/profilo" element={<RequireAuth><Profile /></RequireAuth>} />
+                  <Route path="/profilo/:username" element={<Profile />} />
                   <Route path="/admin/setup" element={<RequireAuth><AdminSetup /></RequireAuth>} />
                   <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminPanel /></RequireAdmin></RequireAuth>} />
                   <Route path="*" element={<NotFound />} />
