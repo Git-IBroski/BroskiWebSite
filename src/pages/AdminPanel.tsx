@@ -29,6 +29,7 @@ interface Player {
   region: string;
   points: number;
   combat_rank: string;
+  created_by: string | null;
 }
 
 interface PlayerRank {
@@ -148,7 +149,11 @@ const AdminPanel: React.FC = () => {
   const { profile } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<AdminTab>('news');
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => {
+    // Default tab basato sul ruolo
+    if (profile?.admin_rank === 'tier_tester') return 'tierlist';
+    return 'news';
+  });
   
   // Countdown state
   const [countdownTarget, setCountdownTarget] = useState('2026-07-01T00:00');
@@ -432,6 +437,7 @@ const AdminPanel: React.FC = () => {
         region: playerForm.region,
         points,
         combat_rank: combatRank,
+        created_by: profile?.id || null,
       }).select().single();
       
       if (newPlayer) playerId = newPlayer.id;
@@ -540,80 +546,98 @@ const AdminPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-6 flex gap-2">
-          <button
-            onClick={() => setActiveTab('news')}
-            className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
-              activeTab === 'news'
-                ? 'bg-primary-container text-white'
-                : 'bg-surface-container text-on-surface hover:-translate-y-1'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 inline-block">newspaper</span>
-            {t('admin.tab.news')}
-          </button>
-          <button
-            onClick={() => setActiveTab('tierlist')}
-            className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
-              activeTab === 'tierlist'
-                ? 'bg-primary-container text-white'
-                : 'bg-surface-container text-on-surface hover:-translate-y-1'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 inline-block">emoji_events</span>
-            {t('admin.tab.tierlist')}
-          </button>
-          <button
-            onClick={() => setActiveTab('countdown')}
-            className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
-              activeTab === 'countdown'
-                ? 'bg-primary-container text-white'
-                : 'bg-surface-container text-on-surface hover:-translate-y-1'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 inline-block">timer</span>
-            COUNTDOWN
-          </button>
-          <button
-            onClick={() => setActiveTab('contacts')}
-            className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
-              activeTab === 'contacts'
-                ? 'bg-primary-container text-white'
-                : 'bg-surface-container text-on-surface hover:-translate-y-1'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 inline-block">contacts</span>
-            CONTATTI
-          </button>
-          <button
-            onClick={() => setActiveTab('mods')}
-            className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
-              activeTab === 'mods'
-                ? 'bg-primary-container text-white'
-                : 'bg-surface-container text-on-surface hover:-translate-y-1'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 inline-block">extension</span>
-            MODS
-          </button>
-          <button
-            onClick={async () => {
-              setActiveTab('ideas');
-              // Mark ideas as seen
-              if (profile) {
-                await supabase.from('profiles').update({ last_ideas_seen_at: new Date().toISOString() }).eq('id', profile.id);
-              }
-            }}
-            className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
-              activeTab === 'ideas'
-                ? 'bg-primary-container text-white'
-                : 'bg-surface-container text-on-surface hover:-translate-y-1'
-            }`}
-          >
-            <span className="material-symbols-outlined mr-2 inline-block">lightbulb</span>
-            IDEE
-          </button>
+        {/* Tabs - visibilità basata su admin_rank */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          {/* NEWS: owner, admin, mod */}
+          {(['owner', 'admin', 'mod'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={() => setActiveTab('news')}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'news'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">newspaper</span>
+              {t('admin.tab.news')}
+            </button>
+          )}
+          {/* TIERLIST: owner, admin, tier_tester */}
+          {(['owner', 'admin', 'tier_tester'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={() => setActiveTab('tierlist')}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'tierlist'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">emoji_events</span>
+              {t('admin.tab.tierlist')}
+            </button>
+          )}
+          {/* COUNTDOWN: owner, admin */}
+          {(['owner', 'admin'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={() => setActiveTab('countdown')}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'countdown'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">timer</span>
+              COUNTDOWN
+            </button>
+          )}
+          {/* CONTATTI: owner, admin */}
+          {(['owner', 'admin'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={() => setActiveTab('contacts')}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'contacts'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">contacts</span>
+              CONTATTI
+            </button>
+          )}
+          {/* MODS: owner, admin, mod */}
+          {(['owner', 'admin', 'mod'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={() => setActiveTab('mods')}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'mods'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">extension</span>
+              MODS
+            </button>
+          )}
+          {/* IDEE: owner, admin, mod */}
+          {(['owner', 'admin', 'mod'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={async () => {
+                setActiveTab('ideas');
+                if (profile) {
+                  await supabase.from('profiles').update({ last_ideas_seen_at: new Date().toISOString() }).eq('id', profile.id);
+                }
+              }}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'ideas'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">lightbulb</span>
+              IDEE
+            </button>
+          )}
+          {/* UTENTI: owner only */}
           {profile?.admin_rank === 'owner' && (
             <button
               onClick={() => setActiveTab('users')}
@@ -1079,23 +1103,31 @@ const AdminPanel: React.FC = () => {
                       </div>
 
                       <div className="mt-3 flex items-center justify-between">
-                        <span className="rounded-lg border-[2px] border-black bg-green-500 px-2 py-1 text-xs font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                          ATTIVO
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditPlayer(player)}
-                            className="rounded-lg border-[2px] border-black bg-tertiary p-2 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeletePlayer(player.id)}
-                            className="rounded-lg border-[2px] border-black bg-error-container p-2 text-on-error-container shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
+                        <div className="flex items-center gap-1.5">
+                          <span className="rounded-lg border-[2px] border-black bg-green-500 px-2 py-1 text-xs font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            ATTIVO
+                          </span>
+                          {profile?.admin_rank === 'tier_tester' && player.created_by === profile?.id && (
+                            <span className="rounded-lg border border-tertiary bg-tertiary/20 px-1.5 py-0.5 font-label-caps text-[8px] text-tertiary">TUO</span>
+                          )}
                         </div>
+                        {/* Tier Tester può editare/eliminare solo i propri player */}
+                        {(profile?.admin_rank !== 'tier_tester' || player.created_by === profile?.id) && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleEditPlayer(player)}
+                              className="rounded-lg border-[2px] border-black bg-tertiary p-2 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeletePlayer(player.id)}
+                              className="rounded-lg border-[2px] border-black bg-error-container p-2 text-on-error-container shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
