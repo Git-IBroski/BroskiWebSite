@@ -289,21 +289,21 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
             </div>
           ) : (
             /* SIMPLE MODE */
-            <div className="space-y-6">
+            <div className="space-y-5">
             {/* Theme */}
-            <Section title="TEMA">
+            <Section title="Tema Rapido" icon="style" hint="Scegli un tema predefinito per applicare colori coordinati con un click.">
               <div className="flex flex-wrap gap-2">
                 {THEMES.map(t => (
                   <button key={t.value} onClick={() => handleThemeChange(t.value)}
-                    className={`rounded-xl border-2 border-black px-3 py-2 font-label-caps text-[10px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${form.theme === t.value ? 'bg-primary-container text-white' : 'bg-surface-container-high text-on-surface-variant hover:-translate-y-0.5'}`}
-                    style={t.accent ? { borderColor: t.accent } : {}}
+                    className={`rounded-xl border-2 px-3 py-2 font-label-caps text-[10px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${form.theme === t.value ? 'bg-primary-container text-white border-primary-container' : 'bg-surface-container text-on-surface-variant border-black hover:-translate-y-0.5'}`}
+                    style={t.accent && form.theme === t.value ? { borderColor: t.accent, backgroundColor: `${t.accent}33` } : t.accent ? { borderColor: `${t.accent}66` } : {}}
                   >{t.label}</button>
                 ))}
               </div>
             </Section>
 
             {/* Identity */}
-            <Section title="IDENTITÀ">
+            <Section title="Chi Sei" icon="person" hint="Le tue informazioni principali visibili sul profilo.">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Minecraft Username" value={form.minecraft_username} onChange={v => setForm({ ...form, minecraft_username: v })} />
                 <Field label="Display Name" value={form.display_name} onChange={v => setForm({ ...form, display_name: v })} />
@@ -312,12 +312,12 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
               </div>
               <div className="mt-3">
                 <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Bio</label>
-                <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={3} placeholder="Raccontati..." className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
+                <textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} rows={3} placeholder="Raccontati..." className="w-full rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
               </div>
             </Section>
 
             {/* Visual */}
-            <Section title="ASPETTO">
+            <Section title="Stile Testo & Avatar" icon="format_paint" hint="Personalizza come appare il tuo nome e la foto.">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Accent</label>
@@ -330,19 +330,19 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
                   <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Bordo Avatar</label>
                   <input type="color" value={form.avatar_border_color || form.accent_color} onChange={e => setForm({ ...form, avatar_border_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 rounded-xl border-2 border-dashed border-black/30 p-3">
                   <input type="checkbox" checked={form.avatar_border_animated} onChange={e => setForm({ ...form, avatar_border_animated: e.target.checked })} className="h-5 w-5 rounded border-2 border-black" />
-                  <span className="font-label-caps text-[10px] text-on-surface-variant">Bordo Animato Rainbow</span>
+                  <span className="font-label-caps text-[10px] text-on-surface-variant">🌈 Bordo Animato Rainbow</span>
                 </div>
               </div>
             </Section>
 
             {/* Banner & Background */}
-            <Section title="BANNER & SFONDO">
+            <Section title="Banner & Sfondo Card" icon="wallpaper" hint="L'immagine o il colore in cima al profilo e lo sfondo della card.">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Banner (Upload max 2MB)</label>
-                  <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
+                  <input type="file" accept="image/*" onChange={e => setBannerFile(e.target.files?.[0] || null)} className="w-full rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 text-sm text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
                 </div>
                 <Field label="Banner Gradient (hex,hex,hex)" value={form.banner_gradient} onChange={v => setForm({ ...form, banner_gradient: v })} placeholder="#1e3a5f,#2563eb" />
                 <Field label="Sfondo Card (hex o hex,hex,hex)" value={form.card_background} onChange={v => setForm({ ...form, card_background: v })} placeholder="#1a1a2e,#0f3460" />
@@ -350,7 +350,7 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
             </Section>
 
             {/* Page & Borders */}
-            <Section title="PAGINA & BORDI">
+            <Section title="Pagina & Bordi" icon="crop_square" hint="Controlla lo sfondo della pagina intera e lo stile dei bordi della card.">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Sfondo Pagina (hex)" value={form.page_bg_color} onChange={v => setForm({ ...form, page_bg_color: v })} placeholder="#0a0a0a" />
                 <Field label="Sfondo Pagina Gradient" value={form.page_bg_gradient} onChange={v => setForm({ ...form, page_bg_gradient: v })} placeholder="#0a0a0a,#1a1a2e,#000" />
@@ -359,31 +359,30 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
                   <input type="color" value={form.text_color} onChange={e => setForm({ ...form, text_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
                 </div>
                 <div>
-                  <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Bordi Card</label>
+                  <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Bordi</label>
                   <input type="color" value={form.border_color} onChange={e => setForm({ ...form, border_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
                 </div>
                 <div>
                   <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Colore Ombra</label>
                   <input type="color" value={form.shadow_color} onChange={e => setForm({ ...form, shadow_color: e.target.value })} className="h-10 w-full cursor-pointer rounded-xl border-[3px] border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]" />
                 </div>
-                <Field label="Border Radius" value={form.border_radius} onChange={v => setForm({ ...form, border_radius: v })} placeholder="2rem" />
+                <Field label="Raggio Angoli (es: 2rem)" value={form.border_radius} onChange={v => setForm({ ...form, border_radius: v })} placeholder="2rem" />
                 <Select label="Stile Bordo" value={form.border_style} options={[{value:'solid',label:'Solido'},{value:'dashed',label:'Tratteggiato'},{value:'dotted',label:'Puntini'},{value:'double',label:'Doppio'},{value:'none',label:'Nessuno'}]} onChange={v => setForm({ ...form, border_style: v })} />
               </div>
             </Section>
 
             {/* Custom CSS */}
-            <Section title="CSS PERSONALIZZATO (AVANZATO)">
+            <Section title="CSS Extra" icon="code" hint="Per utenti avanzati — aggiungi proprietà CSS alla card (non richiede approvazione).">
               <textarea value={form.custom_css} onChange={e => setForm({ ...form, custom_css: e.target.value })} rows={3} placeholder="background: red; border: 2px dashed gold; ..."
-                className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-xs text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono" />
-              <p className="mt-1 text-[9px] text-on-surface-variant/60">Proprietà CSS applicate direttamente alla card del profilo</p>
+                className="w-full rounded-xl border-[3px] border-black bg-black/50 px-3 py-2 text-xs text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono" />
             </Section>
 
             {/* Social */}
-            <Section title="SOCIAL LINKS">
+            <Section title="Social Links" icon="share" hint="Aggiungi i tuoi profili social — verranno mostrati come bottoni cliccabili.">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="YouTube" value={form.social_youtube} onChange={v => setForm({ ...form, social_youtube: v })} placeholder="https://youtube.com/@..." />
                 <Field label="Twitch" value={form.social_twitch} onChange={v => setForm({ ...form, social_twitch: v })} placeholder="https://twitch.tv/..." />
-                <Field label="Discord (tag)" value={form.social_discord} onChange={v => setForm({ ...form, social_discord: v })} placeholder="username#0000" />
+                <Field label="Discord (tag)" value={form.social_discord} onChange={v => setForm({ ...form, social_discord: v })} placeholder="username" />
                 <Field label="Instagram" value={form.social_instagram} onChange={v => setForm({ ...form, social_instagram: v })} placeholder="https://instagram.com/..." />
                 <Field label="TikTok" value={form.social_tiktok} onChange={v => setForm({ ...form, social_tiktok: v })} placeholder="https://tiktok.com/@..." />
                 <Field label="GitHub" value={form.social_github} onChange={v => setForm({ ...form, social_github: v })} placeholder="https://github.com/..." />
@@ -391,32 +390,29 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
             </Section>
 
             {/* Spotify */}
-            <Section title="MUSICA (SPOTIFY EMBED)">
-              <div>
-                <label className="mb-1 block font-label-caps text-[10px] text-on-surface-variant">Incolla il codice iframe di Spotify</label>
-                <textarea value={form.spotify_iframe} onChange={e => setForm({ ...form, spotify_iframe: e.target.value })} rows={3} placeholder='<iframe src="https://open.spotify.com/embed/track/..." ...'
-                  className="w-full rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 text-xs text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono" />
-                <p className="mt-1 text-[9px] text-on-surface-variant/60">Vai su Spotify → Condividi → Copia codice embed</p>
-              </div>
+            <Section title="Musica" icon="music_note" hint="Incolla il codice embed di Spotify per mostrare la tua canzone preferita.">
+              <textarea value={form.spotify_iframe} onChange={e => setForm({ ...form, spotify_iframe: e.target.value })} rows={3} placeholder='<iframe src="https://open.spotify.com/embed/track/..." ...'
+                className="w-full rounded-xl border-[3px] border-black bg-surface-container px-3 py-2 text-xs text-on-surface shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] font-mono" />
+              <p className="mt-1 text-[9px] text-on-surface-variant/50">Spotify → Condividi → Copia codice embed</p>
             </Section>
 
             {/* Interests */}
-            <Section title="INTERESSI">
+            <Section title="Interessi" icon="interests" hint="Seleziona le attività che ti appassionano.">
               <div className="flex flex-wrap gap-2">
                 {INTEREST_OPTIONS.map(i => (
                   <button key={i} onClick={() => toggleInterest(i)}
-                    className={`rounded-lg border-2 border-black px-2.5 py-1 font-label-caps text-[9px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${form.interests.includes(i) ? 'bg-primary-container text-white' : 'bg-surface-container-high text-on-surface-variant hover:-translate-y-0.5'}`}
+                    className={`rounded-lg border-2 border-black px-2.5 py-1.5 font-label-caps text-[9px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${form.interests.includes(i) ? 'bg-primary-container text-white -translate-y-0.5' : 'bg-surface-container text-on-surface-variant hover:-translate-y-0.5'}`}
                   >{i}</button>
                 ))}
               </div>
             </Section>
 
             {/* Badges */}
-            <Section title="BADGE (max 3)">
+            <Section title="Badge" icon="military_tech" hint="Scegli fino a 3 badge da mostrare sul profilo.">
               <div className="flex flex-wrap gap-2">
                 {[...BADGE_OPTIONS, ...(profileData.badges || [])].filter((b, i, arr) => arr.indexOf(b) === i).map(b => (
                   <button key={b} onClick={() => toggleBadge(b)}
-                    className={`rounded-lg border-2 border-black px-2.5 py-1 font-label-caps text-[9px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${form.active_badges.includes(b) ? 'bg-tertiary text-black' : 'bg-surface-container-high text-on-surface-variant hover:-translate-y-0.5'}`}
+                    className={`rounded-lg border-2 border-black px-2.5 py-1.5 font-label-caps text-[9px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${form.active_badges.includes(b) ? 'bg-tertiary text-black -translate-y-0.5' : 'bg-surface-container text-on-surface-variant hover:-translate-y-0.5'}`}
                   >{b}</button>
                 ))}
               </div>
@@ -445,9 +441,13 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
 };
 
 // Helper components
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div>
-    <h3 className="mb-3 font-label-caps text-[12px] text-on-surface-variant">{title}</h3>
+const Section = ({ title, icon, children, hint }: { title: string; icon?: string; children: React.ReactNode; hint?: string }) => (
+  <div className="rounded-2xl border-[3px] border-black bg-surface-container-high p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+    <div className="mb-4 flex items-center gap-2">
+      {icon && <span className="material-symbols-outlined rounded-lg border-2 border-black bg-primary-container/20 p-1.5 text-[18px] text-primary-container">{icon}</span>}
+      <h3 className="font-headline-md text-[16px] text-white">{title}</h3>
+    </div>
+    {hint && <p className="mb-3 text-[11px] text-on-surface-variant/70">{hint}</p>}
     {children}
   </div>
 );
