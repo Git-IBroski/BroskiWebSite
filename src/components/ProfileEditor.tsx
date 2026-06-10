@@ -148,7 +148,7 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
           setSaving(false);
           return;
         }
-        const path = `banners/${profile.id}/${Date.now()}_${bannerFile.name}`;
+        const path = `banners/${profileData.id}/${Date.now()}_${bannerFile.name}`;
         const { error: uploadError } = await supabase.storage.from('mod-images').upload(path, bannerFile);
         if (uploadError) throw new Error(uploadError.message);
         const { data: urlData } = supabase.storage.from('mod-images').getPublicUrl(path);
@@ -156,6 +156,7 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
       }
 
       const isOwner = profile.admin_rank === 'owner';
+      const isEditingOwnProfile = profile.id === profileData.id;
       const mcChanged = form.minecraft_username !== (profileData.minecraft_username || '');
 
       const socialLinks: Record<string, string> = {};
@@ -219,18 +220,18 @@ const ProfileEditor: React.FC<Props> = ({ profileData, onSave, onCancel }) => {
         updateData.pending_custom_css = null;
       }
 
-      if (mcChanged && !isOwner) {
+      if (mcChanged && !isOwner && isEditingOwnProfile) {
         updateData.ign_verified = false;
       }
 
-      await supabase.from('profiles').update(updateData).eq('id', profile.id);
+      await supabase.from('profiles').update(updateData).eq('id', profileData.id);
 
       onSave({
         ...profileData,
         ...updateData,
         banner_url: bannerUrl,
         social_links: socialLinks,
-        ign_verified: (mcChanged && !isOwner) ? false : profileData.ign_verified,
+        ign_verified: (mcChanged && !isOwner && isEditingOwnProfile) ? false : profileData.ign_verified,
       } as ProfileCustomization);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Errore sconosciuto');
