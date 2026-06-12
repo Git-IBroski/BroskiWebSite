@@ -25,7 +25,35 @@ const TIER_ORDER: Record<string, number> = {
   'UNRANKED': 99
 };
 
-const CATEGORIES = ['OVERALL', 'SWORD', 'AXE', 'MACE', 'SPEAR MACE', 'SMP', 'DIA SMP', 'CART PVP', 'VANILLA', 'NETHOP'];
+const CATEGORIES = ['OVERALL', 'SWORD', 'AXE', 'MACE', 'SPEARMACE', 'SMP', 'DIASMP', 'CARTPVP', 'VANILLA', 'NETHOP'];
+
+// Display names for UI labels
+const CATEGORY_DISPLAY: Record<string, string> = {
+  OVERALL: 'OVERALL',
+  SWORD: 'SWORD',
+  AXE: 'AXE',
+  MACE: 'MACE',
+  SPEARMACE: 'SPEAR MACE',
+  SMP: 'SMP',
+  DIASMP: 'DIA SMP',
+  CARTPVP: 'CART PVP',
+  VANILLA: 'VANILLA',
+  NETHOP: 'NETHOP',
+};
+
+// Icon file names (some have spaces in the filename)
+const CATEGORY_ICON_FILE: Record<string, string> = {
+  OVERALL: 'overall',
+  SWORD: 'sword',
+  AXE: 'axe',
+  MACE: 'mace',
+  SPEARMACE: 'spear mace',
+  SMP: 'smp',
+  DIASMP: 'dia smp',
+  CARTPVP: 'cart pvp',
+  VANILLA: 'vanilla',
+  NETHOP: 'nethop',
+};
 
 const getTierTone = (tier?: string) => {
   if (!tier || tier === 'UNRANKED') return 'border-outline bg-surface-container text-on-surface-variant';
@@ -40,21 +68,24 @@ const getPodiumTone = (index: number) => {
   return 'from-surface-container-high via-surface-container-high to-surface-container';
 };
 
-const CategoryIcon = ({ category, className = 'h-8 w-8' }: { category: string; className?: string }) => (
-  <img
-    src={`/icons/categories/${category.toLowerCase()}.svg`}
-    alt=""
-    className={`${className} object-contain drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]`}
-    onError={(event) => {
-      const target = event.target as HTMLImageElement;
-      if (target.src.endsWith('.svg')) {
-        target.src = `/icons/categories/${category.toLowerCase()}.png`;
-      } else {
-        target.style.display = 'none';
-      }
-    }}
-  />
-);
+const CategoryIcon = ({ category, className = 'h-8 w-8' }: { category: string; className?: string }) => {
+  const iconFile = CATEGORY_ICON_FILE[category] || category.toLowerCase();
+  return (
+    <img
+      src={`/icons/categories/${iconFile}.svg`}
+      alt=""
+      className={`${className} object-contain drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]`}
+      onError={(event) => {
+        const target = event.target as HTMLImageElement;
+        if (target.src.endsWith('.svg')) {
+          target.src = `/icons/categories/${iconFile}.png`;
+        } else {
+          target.style.display = 'none';
+        }
+      }}
+    />
+  );
+};
 
 const StatCard = ({ icon, label, value, accent }: { icon: string; label: string; value: React.ReactNode; accent: string }) => (
   <div className="rounded-3xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
@@ -175,7 +206,7 @@ const TierList: React.FC = () => {
                 </a>
                 <div className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-bright px-4 py-3 font-label-caps text-xs text-on-surface shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
                   <span className="material-symbols-outlined text-[18px] text-tertiary">bolt</span>
-                  {activeCategory === 'OVERALL' ? t('tierlist.category.overall') : activeCategory}
+                  {activeCategory === 'OVERALL' ? t('tierlist.category.overall') : CATEGORY_DISPLAY[activeCategory] || activeCategory}
                 </div>
               </div>
             </div>
@@ -220,7 +251,7 @@ const TierList: React.FC = () => {
                     <div className="mb-2 flex h-10 items-center justify-center">
                       <CategoryIcon category={cat} />
                     </div>
-                    <span>{cat}</span>
+                    <span>{CATEGORY_DISPLAY[cat] || cat}</span>
                   </button>
                 ))}
               </div>
@@ -234,7 +265,7 @@ const TierList: React.FC = () => {
                 <div>
                   <p className="font-label-caps text-[11px] text-tertiary">{t('tierlist.leaderboard.active')}</p>
                   <h2 className="font-headline-md text-2xl uppercase text-white sm:text-3xl">
-                    {activeCategory === 'OVERALL' ? t('tierlist.category.overall') : activeCategory}
+                    {activeCategory === 'OVERALL' ? t('tierlist.category.overall') : CATEGORY_DISPLAY[activeCategory] || activeCategory}
                   </h2>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -341,10 +372,10 @@ const TierList: React.FC = () => {
                                     const tier = getRankForCat(cat);
                                     const tierTone = getTierTone(tier);
                                     return (
-                                      <div key={cat} className={`flex min-w-[70px] items-center gap-1.5 rounded-xl border-2 px-2 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${tierTone}`} title={cat}>
+                                      <div key={cat} className={`flex min-w-[70px] items-center gap-1.5 rounded-xl border-2 px-2 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${tierTone}`} title={CATEGORY_DISPLAY[cat] || cat}>
                                         <CategoryIcon category={cat} className="h-4 w-4" />
                                         <div className="flex flex-col leading-none">
-                                          <span className="font-label-caps text-[8px]">{cat}</span>
+                                          <span className="font-label-caps text-[8px]">{CATEGORY_DISPLAY[cat] || cat}</span>
                                           <span className="font-headline-md text-[12px]">{tier}</span>
                                         </div>
                                       </div>
@@ -357,10 +388,10 @@ const TierList: React.FC = () => {
                                     const tier = getRankForCat(cat);
                                     const tierTone = getTierTone(tier);
                                     return (
-                                      <div key={cat} className={`flex min-w-[70px] items-center gap-1.5 rounded-xl border-2 px-2 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${tierTone}`} title={cat}>
+                                      <div key={cat} className={`flex min-w-[70px] items-center gap-1.5 rounded-xl border-2 px-2 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${tierTone}`} title={CATEGORY_DISPLAY[cat] || cat}>
                                         <CategoryIcon category={cat} className="h-4 w-4" />
                                         <div className="flex flex-col leading-none">
-                                          <span className="font-label-caps text-[8px]">{cat}</span>
+                                          <span className="font-label-caps text-[8px]">{CATEGORY_DISPLAY[cat] || cat}</span>
                                           <span className="font-headline-md text-[12px]">{tier}</span>
                                         </div>
                                       </div>
