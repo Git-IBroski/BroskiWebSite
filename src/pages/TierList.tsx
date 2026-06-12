@@ -140,8 +140,8 @@ const TierList: React.FC = () => {
 
   return (
     <PageAnimator className="relative flex-grow overflow-hidden px-4 py-8 sm:px-margin">
-      <div className="pointer-events-none absolute left-[-8rem] top-24 h-72 w-72 rounded-full bg-primary-container/20 blur-3xl"></div>
-      <div className="pointer-events-none absolute right-[-10rem] top-[34rem] h-80 w-80 rounded-full bg-secondary-container/20 blur-3xl"></div>
+      <div className="pointer-events-none absolute left-[-8rem] top-24 h-72 w-72 rounded-full bg-primary-container/20 blur-2xl"></div>
+      <div className="pointer-events-none absolute right-[-10rem] top-[34rem] h-80 w-80 rounded-full bg-secondary-container/20 blur-2xl"></div>
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-margin">
       {/* Page Header */}
       <div>
@@ -269,8 +269,8 @@ const TierList: React.FC = () => {
                   const rankColor = index === 0 ? 'text-yellow-400' : index === 1 ? 'text-zinc-300' : index === 2 ? 'text-orange-400' : 'text-outline-variant';
 
                   return (
-                    <div key={player.id} title={mainRank ? `${mainRank.category}: ${mainRank.tier}` : player.ign} className={`group relative overflow-hidden rounded-[2rem] border-4 border-black bg-gradient-to-r p-4 shadow-[7px_7px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] ${getPodiumTone(index)} ${isTop3 ? 'ring-2' : ''}`}>
-                      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0 12%, transparent 12% 24%, rgba(255,255,255,0.12) 24% 36%, transparent 36% 100%)', backgroundSize: '42px 42px' }}></div>
+                    <div key={player.id} title={mainRank ? `${mainRank.category}: ${mainRank.tier}` : player.ign} className={`group relative overflow-hidden rounded-[2rem] border-4 border-black bg-gradient-to-r p-4 shadow-[7px_7px_0px_0px_rgba(0,0,0,1)] will-change-transform ${getPodiumTone(index)} ${isTop3 ? 'ring-2' : ''}`} style={{ transform: 'translateZ(0)' }}>
+                      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.22) 0 12%, transparent 12% 24%, rgba(255,255,255,0.12) 24% 36%, transparent 36% 100%)', backgroundSize: '42px 42px', willChange: 'auto' }}></div>
                       
                       <div className="relative z-10 flex flex-col items-stretch gap-5 lg:grid lg:grid-cols-[1fr_auto_1.2fr] lg:items-center">
                         {/* Left: Rank, Avatar, Name */}
@@ -281,8 +281,9 @@ const TierList: React.FC = () => {
                           <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-3xl border-[3px] border-black bg-zinc-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                             <img 
                               alt={`${player.ign} Avatar`} 
-                              className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-110" 
-                              src={`https://mc-heads.net/body/${player.ign}/100`} 
+                              className="h-full w-full object-cover object-top" 
+                              src={`https://mc-heads.net/body/${player.ign}/100`}
+                              loading="lazy"
                             />
                           </div>
                           <div className="flex min-w-0 flex-col gap-2">
