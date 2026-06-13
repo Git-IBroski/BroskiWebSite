@@ -404,17 +404,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
           }}
         >
           <div className="flex flex-col items-center gap-2">
-            {/* Immagine bomba con ring colorato */}
-            <div className={`relative h-40 w-40 sm:h-52 sm:w-52`}>
+            {/* Immagine bomba */}
+            <div className={`relative h-40 w-40 sm:h-52 sm:w-52`} style={{ transform: 'translateX(3px)' }}>
               <img
                 src={currentBombEvent.image}
                 alt={currentBombEvent.name}
                 className="h-full w-full object-contain"
-              />
-              {/* Ring decorativo centrato sul corpo della bomba (50%, 74%) */}
-              <div
-                className={`pointer-events-none absolute h-32 w-32 rounded-full ring-[3px] ${currentBombEvent.glowColor} sm:h-40 sm:w-40`}
-                style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%)' }}
               />
               {/* Sillaba centrata sul corpo della bomba */}
               <div
