@@ -54,8 +54,8 @@ const gameStyles = `
     50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); }
   }
   @keyframes bp-syllable-pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.08); }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
   }
   @keyframes bp-ring-pulse {
     0% { opacity: 1; transform: scale(1); }
@@ -767,7 +767,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
             </div>
 
             {/* Bomb image + syllable — outer div shifts position, inner div shakes */}
-            <div style={{ transform: 'translate(12px, -18px)' }}>
+            <div style={{ transform: 'translate(9px, -18px)' }}>
               <div
                 className="relative"
                 style={{ animation: `bomb-shake ${Math.max(0.05, 0.5 - shakeIntensity * 0.45)}s infinite` }}
@@ -778,19 +778,18 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
                   alt={currentBombEvent.name}
                   className="h-full w-full object-contain drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]"
                 />
-                <div
-                  className="absolute flex items-center justify-center"
-                  style={{ left: '50%', top: '54%', transform: 'translate(-50%, -50%)' }}
-                >
-                  <span
-                    className="font-headline-lg text-[30px] uppercase tracking-wider text-white sm:text-[40px]"
-                    style={{ textShadow: '0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)', animation: 'bp-syllable-pulse 1.2s ease-in-out infinite' }}
-                  >
-                    {roomState.currentSyllable}
-                  </span>
-                </div>
               </div>
             </div>
+            </div>
+
+            {/* Syllable — positioned at exact ring center, independent of bomb offset */}
+            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20" style={{ transform: 'translate(-50%, -50%)' }}>
+              <span
+                className="font-headline-lg text-[30px] uppercase tracking-wider text-white sm:text-[40px]"
+                style={{ textShadow: '0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}
+              >
+                {roomState.currentSyllable}
+              </span>
             </div>
 
             {/* Numeric timer chip */}
