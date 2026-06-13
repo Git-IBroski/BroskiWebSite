@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageAnimator from '../components/PageAnimator';
 import BombPartyLobby from '../components/bombparty/BombPartyLobby';
@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../config/supabaseClient';
 
 import type { BombType } from '../config/bombPartyEvents';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface BombPartyPlayer {
   id: string;
@@ -40,6 +41,17 @@ export interface RoomState {
 }
 
 const RECONNECT_KEY = 'bombparty_active_room';
+const PLAYER_ID_KEY = 'bombparty_player_id';
+
+// Persistent player ID across mounts/sessions — critical for host preservation
+function getOrCreatePlayerId(): string {
+  let id = sessionStorage.getItem(PLAYER_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    sessionStorage.setItem(PLAYER_ID_KEY, id);
+  }
+  return id;
+}
 
 const BombParty: React.FC = () => {
   const { profile, loading: authLoading } = useAuth();
@@ -50,6 +62,10 @@ const BombParty: React.FC = () => {
   const [reconnectRoom, setReconnectRoom] = useState<string | null>(null);
   const [attemptingReconnect, setAttemptingReconnect] = useState(false);
 
+  // Single unified channel for the entire room lifecycle
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const playerIdRef = useRef<string>(getOrCreatePlayerId());
+
   // Sync nickname when profile loads
   useEffect(() => {
     if (profile?.minecraft_username && !nickname) {
@@ -57,7 +73,17 @@ const BombParty: React.FC = () => {
     }
   }, [profile?.minecraft_username]);
 
-  // Check for active room to reconnect to (only when on base /bomb-party without URL code)
+  // Clean up channel on unmount
+  useEffect(() => {
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, []);
+
+  // Check for active room to reconnect to (only on base /bomb-party without URL code)
   useEffect(() => {
     if (authLoading) return;
     const savedRoom = localStorage.getItem(RECONNECT_KEY);
@@ -78,7 +104,7 @@ const BombParty: React.FC = () => {
     }
   }, [authLoading]);
 
-  // Direct reconnect: if URL has room code AND we have a nickname, try to reconnect to active game
+  // Direct reconnect: if URL has room code, attempt to rejoin
   useEffect(() => {
     if (!urlRoomCode || roomState || authLoading || attemptingReconnect) return;
     const myNickname = nickname || profile?.minecraft_username;
@@ -91,30 +117,34 @@ const BombParty: React.FC = () => {
       .select('status, game_state, settings, host_id')
       .eq('room_code', urlRoomCode.toUpperCase())
       .single()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!data) {
           setAttemptingReconnect(false);
           return;
         }
 
-        // If game is playing and I'm in the players, reconnect directly to the game
+        // If game is playing and I'm in the players, reconnect directly
         if (data.status === 'playing' && data.game_state) {
           const savedState = data.game_state as RoomState;
           const myPlayerInGame = savedState.players.find(p => p.nickname === myNickname);
           if (myPlayerInGame) {
-            // Direct reconnect to active game!
+            // Restore my player ID so host detection works
+            playerIdRef.current = myPlayerInGame.id;
+            sessionStorage.setItem(PLAYER_ID_KEY, myPlayerInGame.id);
+            // Subscribe to the unified channel, then set room state
+            subscribeToChannel(savedState.roomCode, myPlayerInGame, savedState.settings, myPlayerInGame.isHost);
             setRoomState(savedState);
             setAttemptingReconnect(false);
             return;
           }
         }
 
-        // Otherwise let the lobby handle the normal join flow
+        // Room is in waiting — auto-join will be handled by the lobby's auto-join
         setAttemptingReconnect(false);
       });
   }, [urlRoomCode, authLoading, nickname, profile?.minecraft_username]);
 
-  // Update URL when room state changes
+  // Update URL and localStorage when room state changes
   useEffect(() => {
     if (roomState?.roomCode) {
       localStorage.setItem(RECONNECT_KEY, roomState.roomCode);
@@ -132,6 +162,103 @@ const BombParty: React.FC = () => {
     }
   }, [roomState?.roomCode, navigate, attemptingReconnect]);
 
+  /**
+   * Unified channel subscription.
+   * Handles Presence (who's online) + Broadcast (game events) in a single channel.
+   * Created once per room and shared across Lobby and Game components.
+   */
+  const subscribeToChannel = useCallback((
+    roomCode: string,
+    myPlayer: BombPartyPlayer,
+    roomSettings: RoomSettings,
+    isHost: boolean
+  ) => {
+    // Remove existing channel if any
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = supabase.channel(`bombparty:${roomCode}`, {
+      config: { presence: { key: myPlayer.id } },
+    });
+
+    // --- PRESENCE: lobby player sync ---
+    channel.on('presence', { event: 'sync' }, () => {
+      const presenceState = channel.presenceState();
+      const players: BombPartyPlayer[] = [];
+
+      Object.values(presenceState).forEach((presences) => {
+        const p = (presences as unknown as { player: BombPartyPlayer }[])[0];
+        if (p?.player) {
+          players.push(p.player);
+        }
+      });
+
+      // Sort: host first, then by ID for stable ordering
+      players.sort((a, b) => {
+        if (a.isHost && !b.isHost) return -1;
+        if (!a.isHost && b.isHost) return 1;
+        return a.id.localeCompare(b.id);
+      });
+
+      setRoomState((prev) => {
+        // Only update players from Presence when in waiting status
+        if (!prev || prev.status !== 'waiting') return prev;
+        return { ...prev, players };
+      });
+    });
+
+    // --- BROADCAST: game_start ---
+    channel.on('broadcast', { event: 'game_start' }, ({ payload }) => {
+      const newState = payload as RoomState;
+      setRoomState(newState);
+    });
+
+    // --- BROADCAST: game_state_update (turn changes, time up, etc.) ---
+    channel.on('broadcast', { event: 'game_state_update' }, ({ payload }) => {
+      const newState = payload as RoomState;
+      setRoomState(newState);
+    });
+
+    // --- BROADCAST: word_accepted ---
+    channel.on('broadcast', { event: 'word_accepted' }, ({ payload }) => {
+      const { newState } = payload as { newState: RoomState; word: string };
+      setRoomState(newState);
+    });
+
+    // --- BROADCAST: game_over ---
+    channel.on('broadcast', { event: 'game_over' }, ({ payload }) => {
+      setRoomState(payload as RoomState);
+    });
+
+    // --- BROADCAST: settings_update (host changes settings in lobby) ---
+    channel.on('broadcast', { event: 'settings_update' }, ({ payload }) => {
+      setRoomState((prev) => prev ? { ...prev, settings: payload as RoomSettings } : prev);
+    });
+
+    // --- BROADCAST: return_to_lobby ---
+    channel.on('broadcast', { event: 'return_to_lobby' }, ({ payload }) => {
+      setRoomState(payload as RoomState);
+      // Re-track presence with reset player data
+      const meInPayload = (payload as RoomState).players.find(p => p.id === myPlayer.id);
+      if (meInPayload) {
+        channel.track({ player: meInPayload, isHost: meInPayload.isHost });
+      }
+    });
+
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          player: myPlayer,
+          isHost,
+        });
+      }
+    });
+
+    channelRef.current = channel;
+  }, []);
+
   const updateRoomState = useCallback((update: RoomState | null | ((prev: RoomState | null) => RoomState | null)) => {
     if (typeof update === 'function') {
       setRoomState(update);
@@ -146,6 +273,16 @@ const BombParty: React.FC = () => {
       navigate(`/bomb-party/${reconnectRoom}`, { replace: true });
     }
   };
+
+  const handleLeaveRoom = useCallback(() => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+    setRoomState(null);
+    localStorage.removeItem(RECONNECT_KEY);
+    navigate('/bomb-party', { replace: true });
+  }, [navigate]);
 
   // Show loading while attempting reconnect
   if (attemptingReconnect) {
@@ -210,12 +347,19 @@ const BombParty: React.FC = () => {
             roomState={roomState}
             setRoomState={updateRoomState}
             initialJoinCode={urlRoomCode}
+            channel={channelRef.current}
+            subscribeToChannel={subscribeToChannel}
+            playerId={playerIdRef.current}
+            onLeave={handleLeaveRoom}
           />
         ) : (
           <BombPartyGame
             roomState={roomState}
             setRoomState={updateRoomState}
             nickname={nickname}
+            channel={channelRef.current}
+            playerId={playerIdRef.current}
+            onLeave={handleLeaveRoom}
           />
         )}
       </div>

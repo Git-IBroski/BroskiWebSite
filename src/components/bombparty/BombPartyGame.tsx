@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { supabase } from '../../config/supabaseClient';
 import { validateWord, getRandomSyllable, loadDictionary, isDictionaryLoaded } from '../../utils/bombPartyDictionary';
 import { BOMB_EVENTS, rollBombEvent } from '../../config/bombPartyEvents';
 import { saveMatchResult, saveGameState } from '../../utils/bombPartyPersistence';
@@ -10,6 +9,9 @@ interface Props {
   roomState: RoomState;
   setRoomState: (r: RoomState | null | ((prev: RoomState | null) => RoomState | null)) => void;
   nickname: string;
+  channel: RealtimeChannel | null;
+  playerId: string;
+  onLeave: () => void;
 }
 
 function getPlayerPositions(count: number): { top: string; left: string }[] {
@@ -29,7 +31,12 @@ function getPlayerPositions(count: number): { top: string; left: string }[] {
   return positions;
 }
 
-const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) => {
+// Grace period: if the authoritative timer owner doesn't respond,
+// any other client can fire handleTimeUp after this extra delay (ms)
+const FALLBACK_TIMER_EXTRA_MS = 5000;
+
+const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, channel, playerId: _playerId, onLeave }) => {
+  void _playerId; // kept for future use (e.g. player-specific logic)
   const [input, setInput] = useState('');
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' | 'event' | '' }>({ message: '', type: '' });
   const [timeLeft, setTimeLeft] = useState(roomState.settings.turnTime);
@@ -37,9 +44,11 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
   const [playerInputs, setPlayerInputs] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const roomStateRef = useRef(roomState);
   const gameStartTimeRef = useRef(Date.now());
+  // Track the turn to detect stale fallback timers
+  const lastTurnRef = useRef({ turnIndex: roomState.currentTurnIndex, round: roomState.roundNumber });
 
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { if (!isDictionaryLoaded()) loadDictionary(); }, []);
@@ -51,80 +60,61 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
   const mePlayer = roomState.players.find(p => p.nickname === nickname);
   const isSpectator = mePlayer?.isSpectator || false;
 
-  // Effective turn time (star bomb = half time)
+  // Effective turn time (striped bomb = half time)
   const effectiveTurnTime = roomState.currentBomb === 'striped'
     ? Math.max(3, Math.floor(roomState.settings.turnTime / 2))
     : roomState.settings.turnTime;
 
-  // Setup channel
+  // Listen to broadcast events on the unified channel
+  // The channel is managed by BombParty.tsx, but we need to listen for typing
+  // and handle word_accepted feedback locally
   useEffect(() => {
-    const channel = supabase.channel(`bombparty-game:${roomState.roomCode}`);
-    channel
-      .on('broadcast', { event: 'game_state_update' }, ({ payload }) => {
-        const newState = payload as RoomState;
-        setRoomState(newState);
-        checkWinner(newState);
-        const newEffective = newState.currentBomb === 'striped'
-          ? Math.max(3, Math.floor(newState.settings.turnTime / 2))
-          : newState.settings.turnTime;
-        setTimeLeft(newEffective);
-        setInput('');
-        setPlayerInputs({});
-      })
-      .on('broadcast', { event: 'word_accepted' }, ({ payload }) => {
-        const { newState, word } = payload as { newState: RoomState; word: string };
-        setRoomState(newState);
-        checkWinner(newState);
-        setUsedWords(prev => new Set([...prev, word.toLowerCase()]));
-        const newEffective = newState.currentBomb === 'striped'
-          ? Math.max(3, Math.floor(newState.settings.turnTime / 2))
-          : newState.settings.turnTime;
-        setTimeLeft(newEffective);
-        setInput('');
-        setPlayerInputs({});
-        setFeedback({ message: '', type: '' });
-      })
-      .on('broadcast', { event: 'game_over' }, ({ payload }) => {
-        setRoomState(payload as RoomState);
-        if (timerRef.current) clearInterval(timerRef.current);
-      })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const { playerNickname, text } = payload as { playerNickname: string; text: string };
-        if (playerNickname !== nickname) {
-          setPlayerInputs(prev => ({ ...prev, [playerNickname]: text }));
-        }
-      })
-      .subscribe();
+    if (!channel) return;
 
-    channelRef.current = channel;
-    return () => { supabase.removeChannel(channel); };
-  }, [roomState.roomCode, setRoomState, nickname]);
-
-  // Winner check - only triggered by explicit game state changes, not on mount
-  // This prevents false game-over from async race conditions
-  const checkWinner = useCallback((state: RoomState) => {
-    if (state.status !== 'playing') return;
-    if (state.players.length < 2) return;
-    const alive = state.players.filter(p => p.lives > 0);
-    if (alive.length === 1) {
-      const finishedState: RoomState = { ...state, status: 'finished' };
-      setRoomState(finishedState);
-      if (channelRef.current) {
-        channelRef.current.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
+    channel.on('broadcast', { event: 'typing' }, ({ payload }) => {
+      const { playerNickname, text } = payload as { playerNickname: string; text: string };
+      if (playerNickname !== nickname) {
+        setPlayerInputs(prev => ({ ...prev, [playerNickname]: text }));
       }
-      // Persistenza
-      const winner = alive[0];
-      if (winner) {
-        saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
-        saveGameState(finishedState);
-      }
-    }
-  }, [setRoomState]);
+    });
 
-  // Authoritative timer
+    // Listen for word_accepted to update usedWords set locally
+    channel.on('broadcast', { event: 'word_accepted' }, ({ payload }) => {
+      const { word } = payload as { newState: RoomState; word: string };
+      setUsedWords(prev => new Set([...prev, word.toLowerCase()]));
+      setInput('');
+      setPlayerInputs({});
+      setFeedback({ message: '', type: '' });
+    });
+
+    // On game_state_update, reset input/timer display
+    channel.on('broadcast', { event: 'game_state_update' }, () => {
+      setInput('');
+      setPlayerInputs({});
+    });
+
+    // We don't unsubscribe individual listeners in Supabase SDK —
+    // the channel lifecycle is managed by BombParty.tsx
+    return () => {
+      // Supabase doesn't support removing individual broadcast listeners,
+      // but the channel will be cleaned up when leaving the room entirely.
+    };
+  }, [channel, nickname]);
+
+  // Reset timer display when turn changes (from roomState prop updates)
+  useEffect(() => {
+    setTimeLeft(effectiveTurnTime);
+    setInput('');
+    setPlayerInputs({});
+    lastTurnRef.current = { turnIndex: roomState.currentTurnIndex, round: roomState.roundNumber };
+  }, [roomState.currentTurnIndex, roomState.roundNumber, effectiveTurnTime]);
+
+  // Note: winner checking is done inline in handleTimeUp, handleTimeUpFallback, and submitWord
+  // to avoid race conditions with early game-over detection.
+
+  // Authoritative timer: only runs on the current turn player's client
   useEffect(() => {
     if (roomState.status !== 'playing') return;
-    setTimeLeft(effectiveTurnTime);
     if (timerRef.current) clearInterval(timerRef.current);
     if (!isMyTurn) return;
 
@@ -139,18 +129,48 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     }, 1000);
 
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [roomState.currentTurnIndex, roomState.currentSyllable, roomState.status, isMyTurn, effectiveTurnTime]);
+  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn, effectiveTurnTime]);
 
-  // Visual timer
+  // Visual countdown timer for non-active players
   useEffect(() => {
     if (roomState.status !== 'playing' || isMyTurn) return;
     const visualTimer = setInterval(() => {
-      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
+      setTimeLeft((prev) => (prev <= 0 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(visualTimer);
-  }, [roomState.currentTurnIndex, roomState.currentSyllable, roomState.status, isMyTurn]);
+  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn]);
 
-  // Focus
+  // FALLBACK TIMER: if I'm NOT the current turn player, and the timer
+  // reaches 0 + FALLBACK_TIMER_EXTRA_MS without a state update, I fire handleTimeUp
+  useEffect(() => {
+    if (roomState.status !== 'playing' || isMyTurn) {
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+      return;
+    }
+
+    // Clear any existing fallback
+    if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+
+    // Set fallback to fire after effectiveTurnTime + grace period
+    const totalMs = (effectiveTurnTime * 1000) + FALLBACK_TIMER_EXTRA_MS;
+    const capturedTurn = { turnIndex: roomState.currentTurnIndex, round: roomState.roundNumber };
+
+    fallbackTimerRef.current = setTimeout(() => {
+      // Only fire if the turn hasn't changed (meaning the active player never responded)
+      const current = roomStateRef.current;
+      if (
+        current.currentTurnIndex === capturedTurn.turnIndex &&
+        current.roundNumber === capturedTurn.round &&
+        current.status === 'playing'
+      ) {
+        handleTimeUpFallback();
+      }
+    }, totalMs);
+
+    return () => { if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current); };
+  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn, effectiveTurnTime]);
+
+  // Focus input on my turn
   useEffect(() => {
     if (isMyTurn && inputRef.current) inputRef.current.focus();
   }, [isMyTurn]);
@@ -159,22 +179,22 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value);
-    if (channelRef.current && isMyTurn) {
-      channelRef.current.send({
+    if (channel && isMyTurn) {
+      channel.send({
         type: 'broadcast', event: 'typing',
         payload: { playerNickname: nickname, text: value },
       });
     }
   };
 
-  // Determina la prossima bomba per il turno successivo
+  // Determine next bomb for the upcoming turn
   const getNextBomb = useCallback((players: typeof roomState.players, currentIdx: number) => {
-    // La fulmine non può uscire se qualche avversario ha solo 1 vita
     const otherPlayers = players.filter((p, i) => i !== currentIdx && p.lives > 0);
     const canLightning = otherPlayers.every(p => p.lives > 1);
     return rollBombEvent(canLightning);
   }, []);
 
+  // handleTimeUp: called by the authoritative timer (current turn player's client)
   const handleTimeUp = useCallback(async () => {
     const state = roomStateRef.current;
     const currentP = state.players[state.currentTurnIndex];
@@ -182,21 +202,23 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
 
     const updatedPlayers = state.players.map((p, i) => {
       if (i !== state.currentTurnIndex) return p;
-      // Se ha lo scudo, consuma lo scudo invece di perdere vita
-      if (p.hasShield) {
-        return { ...p, hasShield: false };
-      }
+      if (p.hasShield) return { ...p, hasShield: false };
       return { ...p, lives: p.lives - 1 };
     });
 
     const alive = updatedPlayers.filter(p => p.lives > 0);
     if (alive.length <= 1) {
       const finishedState: RoomState = { ...state, players: updatedPlayers, status: 'finished' };
-      if (channelRef.current) {
-        await channelRef.current.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
+      if (channel) {
+        await channel.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
       }
       setRoomState(finishedState);
       if (timerRef.current) clearInterval(timerRef.current);
+      const winner = alive[0];
+      if (winner) {
+        saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
+        saveGameState(finishedState);
+      }
       return;
     }
 
@@ -207,13 +229,8 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
 
     const newFailCount = state.syllableFailCount + 1;
     const shouldChangeSyllable = newFailCount >= state.settings.syllableMaxAge;
-
-    // Determina prossima bomba
     const nextBomb = getNextBomb(updatedPlayers, nextIndex);
-    // Per bomba striped usa sillaba difficile
-    const newSyllable = shouldChangeSyllable
-      ? getRandomSyllable()
-      : state.currentSyllable;
+    const newSyllable = shouldChangeSyllable ? getRandomSyllable() : state.currentSyllable;
 
     const newState: RoomState = {
       ...state,
@@ -225,12 +242,66 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       currentBomb: nextBomb,
     };
 
-    if (channelRef.current) {
-      await channelRef.current.send({ type: 'broadcast', event: 'game_state_update', payload: newState });
+    if (channel) {
+      await channel.send({ type: 'broadcast', event: 'game_state_update', payload: newState });
     }
     setRoomState(newState);
     saveGameState(newState);
-  }, [nickname, setRoomState, getNextBomb]);
+  }, [nickname, setRoomState, getNextBomb, channel]);
+
+  // handleTimeUpFallback: called by any NON-active client when the active player
+  // appears to have disconnected (timer expired + 5s grace with no state change)
+  const handleTimeUpFallback = useCallback(async () => {
+    const state = roomStateRef.current;
+    if (state.status !== 'playing') return;
+
+    const updatedPlayers = state.players.map((p, i) => {
+      if (i !== state.currentTurnIndex) return p;
+      if (p.hasShield) return { ...p, hasShield: false };
+      return { ...p, lives: p.lives - 1 };
+    });
+
+    const alive = updatedPlayers.filter(p => p.lives > 0);
+    if (alive.length <= 1) {
+      const finishedState: RoomState = { ...state, players: updatedPlayers, status: 'finished' };
+      if (channel) {
+        await channel.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
+      }
+      setRoomState(finishedState);
+      const winner = alive[0];
+      if (winner) {
+        saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
+        saveGameState(finishedState);
+      }
+      return;
+    }
+
+    let nextIndex = (state.currentTurnIndex + 1) % updatedPlayers.length;
+    while (updatedPlayers[nextIndex].lives <= 0) {
+      nextIndex = (nextIndex + 1) % updatedPlayers.length;
+    }
+
+    const newFailCount = state.syllableFailCount + 1;
+    const shouldChangeSyllable = newFailCount >= state.settings.syllableMaxAge;
+    const nextBomb = getNextBomb(updatedPlayers, nextIndex);
+    const newSyllable = shouldChangeSyllable ? getRandomSyllable() : state.currentSyllable;
+
+    const newState: RoomState = {
+      ...state,
+      players: updatedPlayers,
+      currentTurnIndex: nextIndex,
+      currentSyllable: newSyllable,
+      roundNumber: state.roundNumber + 1,
+      syllableFailCount: shouldChangeSyllable ? 0 : newFailCount,
+      currentBomb: nextBomb,
+    };
+
+    if (channel) {
+      await channel.send({ type: 'broadcast', event: 'game_state_update', payload: newState });
+    }
+    setRoomState(newState);
+    saveGameState(newState);
+  }, [setRoomState, getNextBomb, channel]);
 
   const submitWord = async () => {
     if (!isMyTurn || !input.trim()) return;
@@ -251,13 +322,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
 
     setUsedWords(prev => new Set([...prev, word]));
 
-    // === APPLICA EFFETTI BOMBA ===
+    // === APPLY BOMB EFFECTS ===
     let updatedPlayers = [...roomState.players];
     let bonusMessage = '';
 
     switch (roomState.currentBomb) {
       case 'dollar':
-        // Parola Lunga: devi scrivere 7+ lettere per +1 vita
         if (word.length >= 7) {
           updatedPlayers = updatedPlayers.map((p, i) =>
             i === roomState.currentTurnIndex
@@ -274,15 +344,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         break;
 
       case 'lightning':
-        // Shock: tutti gli avversari perdono 1 vita (scudo li protegge)
         updatedPlayers = updatedPlayers.map((p, i) => {
           if (i === roomState.currentTurnIndex) {
             return { ...p, score: p.score + word.length, hasShield: false };
           }
           if (p.lives > 0) {
-            if (p.hasShield) {
-              return { ...p, hasShield: false };
-            }
+            if (p.hasShield) return { ...p, hasShield: false };
             return { ...p, lives: p.lives - 1 };
           }
           return p;
@@ -291,7 +358,6 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         break;
 
       case 'striped':
-        // Timer Bomba: tempo dimezzato, scudo consumato
         updatedPlayers = updatedPlayers.map((p, i) =>
           i === roomState.currentTurnIndex ? { ...p, score: p.score + word.length, hasShield: false } : p
         );
@@ -299,7 +365,6 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         break;
 
       case 'star':
-        // Scudo: rispondi correttamente per ottenere uno scudo
         updatedPlayers = updatedPlayers.map((p, i) =>
           i === roomState.currentTurnIndex
             ? { ...p, score: p.score + word.length, hasShield: true }
@@ -309,31 +374,35 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         break;
 
       default:
-        // Normale: solo punti, ma consuma scudo se presente (scudo dura 1 turno)
         updatedPlayers = updatedPlayers.map((p, i) =>
           i === roomState.currentTurnIndex ? { ...p, score: p.score + word.length, hasShield: false } : p
         );
         break;
     }
 
-    // Prossimo giocatore
+    // Check winner after bomb effects
     const alive = updatedPlayers.filter(p => p.lives > 0);
     if (alive.length <= 1) {
       const finishedState: RoomState = { ...roomState, players: updatedPlayers, status: 'finished' };
-      if (channelRef.current) {
-        await channelRef.current.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
+      if (channel) {
+        await channel.send({ type: 'broadcast', event: 'game_over', payload: finishedState });
       }
       setRoomState(finishedState);
       if (timerRef.current) clearInterval(timerRef.current);
+      const winner = alive[0];
+      if (winner) {
+        saveMatchResult(finishedState, winner.nickname, gameStartTimeRef.current);
+        saveGameState(finishedState);
+      }
       return;
     }
 
+    // Next player
     let nextIndex = (roomState.currentTurnIndex + 1) % updatedPlayers.length;
     while (updatedPlayers[nextIndex].lives <= 0) {
       nextIndex = (nextIndex + 1) % updatedPlayers.length;
     }
 
-    // Prossima bomba
     const nextBomb = getNextBomb(updatedPlayers, nextIndex);
     const newSyllable = getRandomSyllable();
 
@@ -347,8 +416,8 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       currentBomb: nextBomb,
     };
 
-    if (channelRef.current) {
-      await channelRef.current.send({
+    if (channel) {
+      await channel.send({
         type: 'broadcast', event: 'word_accepted',
         payload: { newState, word },
       });
@@ -369,13 +438,8 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
     if (e.key === 'Enter') submitWord();
   };
 
-  const leaveGame = () => {
-    if (channelRef.current) supabase.removeChannel(channelRef.current);
-    setRoomState(null);
-  };
-
-  // Return to lobby (host keeps host status, back to waiting)
-  const returnToLobby = () => {
+  // Return to lobby — host preserves host role, broadcast to all
+  const returnToLobby = async () => {
     const lobbyState: RoomState = {
       ...roomState,
       status: 'waiting',
@@ -392,10 +456,13 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         isSpectator: false,
       })),
     };
-    if (channelRef.current) {
-      channelRef.current.send({ type: 'broadcast', event: 'game_state_update', payload: lobbyState });
+
+    if (channel) {
+      await channel.send({ type: 'broadcast', event: 'return_to_lobby', payload: lobbyState });
     }
     setRoomState(lobbyState);
+    // Update DB status back to waiting
+    saveGameState(lobbyState);
   };
 
   // Shake intensity
@@ -405,10 +472,11 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
 
   const positions = getPlayerPositions(roomState.players.length);
 
-  // Game Over
+  // Game Over screen
   if (roomState.status === 'finished') {
     const winner = alivePlayers[0] || roomState.players.reduce((a, b) => a.score > b.score ? a : b);
     const isWinner = winner.nickname === nickname;
+    const amIHost = roomState.players.find(p => p.nickname === nickname)?.isHost;
 
     return (
       <div className="space-y-6">
@@ -437,12 +505,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
           </div>
         </div>
         <div className="flex gap-3">
-          {roomState.players.find(p => p.nickname === nickname)?.isHost && (
+          {amIHost && (
             <button onClick={returnToLobby} className="flex-1 rounded-2xl border-[4px] border-black bg-green-600 px-8 py-4 font-headline-md text-[18px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
               🔄 NUOVO ROUND
             </button>
           )}
-          <button onClick={leaveGame} className="flex-1 rounded-2xl border-[4px] border-black bg-surface-container-high px-8 py-4 font-headline-md text-[18px] text-on-surface-variant shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
+          <button onClick={onLeave} className="flex-1 rounded-2xl border-[4px] border-black bg-surface-container-high px-8 py-4 font-headline-md text-[18px] text-on-surface-variant shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none">
             ESCI
           </button>
         </div>
@@ -469,7 +537,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       {/* Arena */}
       <div className="relative mx-auto aspect-square w-full max-w-[700px] rounded-[2rem] border-[4px] border-black bg-surface-container shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
 
-        {/* Bomba al centro */}
+        {/* Bomb center */}
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{
@@ -477,14 +545,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
           }}
         >
           <div className="flex flex-col items-center gap-2">
-            {/* Immagine bomba */}
             <div className={`relative h-40 w-40 sm:h-52 sm:w-52`} style={{ transform: 'translateX(9px)' }}>
               <img
                 src={currentBombEvent.image}
                 alt={currentBombEvent.name}
                 className="h-full w-full object-contain"
               />
-              {/* Sillaba centrata sul corpo della bomba */}
               <div
                 className="absolute flex items-center justify-center"
                 style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%) translate(-9px, -24px)' }}
@@ -515,7 +581,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
           </div>
         </div>
 
-        {/* Player intorno */}
+        {/* Players around bomb */}
         {roomState.players.map((player, index) => {
           const pos = positions[index];
           const isCurrent = index === roomState.currentTurnIndex;
@@ -597,7 +663,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
       </div>
 
       {/* Leave */}
-      <button onClick={leaveGame} className="rounded-xl border-[3px] border-black bg-surface-container-high px-6 py-2 font-body-lg text-on-surface-variant shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:text-red-400">
+      <button onClick={onLeave} className="rounded-xl border-[3px] border-black bg-surface-container-high px-6 py-2 font-body-lg text-on-surface-variant shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:text-red-400">
         <span className="material-symbols-outlined mr-1 align-middle text-[18px]">logout</span>
         Abbandona
       </button>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../config/supabaseClient';
 import { getRandomSyllable, loadDictionary } from '../../utils/bombPartyDictionary';
 import { useAuth } from '../../context/AuthContext';
 import { rollBombEvent } from '../../config/bombPartyEvents';
-import { createRoom as persistCreateRoom } from '../../utils/bombPartyPersistence';
+import { createRoom as persistCreateRoom, saveGameState } from '../../utils/bombPartyPersistence';
 import type { RoomState, BombPartyPlayer, RoomSettings } from '../../pages/BombParty';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -13,6 +13,15 @@ interface Props {
   roomState: RoomState | null;
   setRoomState: (r: RoomState | null | ((prev: RoomState | null) => RoomState | null)) => void;
   initialJoinCode?: string;
+  channel: RealtimeChannel | null;
+  subscribeToChannel: (
+    roomCode: string,
+    myPlayer: BombPartyPlayer,
+    roomSettings: RoomSettings,
+    isHost: boolean
+  ) => void;
+  playerId: string;
+  onLeave: () => void;  // used by parent for navigation
 }
 
 function generateRoomCode(): string {
@@ -32,7 +41,18 @@ const DEFAULT_SETTINGS: RoomSettings = {
   maxPlayers: 8,
 };
 
-const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, setRoomState, initialJoinCode }) => {
+const BombPartyLobby: React.FC<Props> = ({
+  nickname,
+  setNickname,
+  roomState,
+  setRoomState,
+  initialJoinCode,
+  channel,
+  subscribeToChannel,
+  playerId,
+  onLeave: _onLeave,
+}) => {
+  void _onLeave; // available for future use (e.g. leave from lobby)
   const { profile } = useAuth();
   const isLoggedIn = !!profile?.minecraft_username;
   const [joinCode, setJoinCode] = useState(initialJoinCode || '');
@@ -40,27 +60,18 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState<RoomSettings>(DEFAULT_SETTINGS);
   const [linkCopied, setLinkCopied] = useState(false);
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const playerIdRef = useRef<string>(crypto.randomUUID());
 
-  // Cleanup channel on unmount
-  useEffect(() => {
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-      }
-    };
-  }, []);
-
-  // Auto-join if initialJoinCode is provided (from URL)
+  // Auto-join if initialJoinCode is provided (from URL) and user has a nickname
   const hasAutoJoined = useRef(false);
   useEffect(() => {
-    if (initialJoinCode && !hasAutoJoined.current && !roomState && (nickname || isLoggedIn)) {
-      hasAutoJoined.current = true;
-      // Call joinRoom directly with the code
-      joinWithCode(initialJoinCode);
+    if (initialJoinCode && !hasAutoJoined.current && !roomState) {
+      const finalNickname = nickname.trim() || profile?.minecraft_username;
+      if (finalNickname) {
+        hasAutoJoined.current = true;
+        joinWithCode(initialJoinCode);
+      }
     }
-  }, [initialJoinCode, roomState, nickname, isLoggedIn]);
+  }, [initialJoinCode, roomState, nickname, profile?.minecraft_username]);
 
   const copyRoomLink = () => {
     if (!roomState) return;
@@ -74,87 +85,14 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
   // Host can update settings and broadcast to all players
   const updateSettings = (newSettings: RoomSettings) => {
     setRoomState((prev) => prev ? { ...prev, settings: newSettings } : prev);
-    if (channelRef.current) {
-      channelRef.current.send({
+    if (channel) {
+      channel.send({
         type: 'broadcast',
         event: 'settings_update',
         payload: newSettings,
       });
     }
   };
-
-  // Subscribe to Presence + Broadcast for real-time player sync
-  const subscribeToRoom = useCallback((
-    roomCode: string,
-    myPlayer: BombPartyPlayer,
-    roomSettings: RoomSettings,
-    isHost: boolean
-  ) => {
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-    }
-
-    const channel = supabase.channel(`bombparty:${roomCode}`, {
-      config: { presence: { key: myPlayer.id } },
-    });
-
-    channel.on('presence', { event: 'sync' }, () => {
-      const presenceState = channel.presenceState();
-      const players: BombPartyPlayer[] = [];
-
-      Object.values(presenceState).forEach((presences) => {
-        const p = (presences as unknown as { player: BombPartyPlayer }[])[0];
-        if (p?.player) {
-          players.push(p.player);
-        }
-      });
-
-      // Sort: host first, then by join order
-      players.sort((a, b) => {
-        if (a.isHost && !b.isHost) return -1;
-        if (!a.isHost && b.isHost) return 1;
-        return a.id.localeCompare(b.id);
-      });
-
-      setRoomState((prev) => {
-        const base = prev || {
-          roomCode,
-          players: [],
-          status: 'waiting' as const,
-          currentTurnIndex: 0,
-          currentSyllable: '',
-          roundNumber: 0,
-          settings: roomSettings,
-          syllableFailCount: 0,
-          currentBomb: 'normal' as const,
-        };
-        // Only update players in waiting status - during gameplay, players are managed by game logic
-        if (base.status === 'waiting') {
-          return { ...base, players };
-        }
-        return base;
-      });
-    });
-
-    channel.on('broadcast', { event: 'game_start' }, ({ payload }) => {
-      setRoomState(payload as RoomState);
-    });
-
-    channel.on('broadcast', { event: 'settings_update' }, ({ payload }) => {
-      setRoomState((prev) => prev ? { ...prev, settings: payload as RoomSettings } : prev);
-    });
-
-    channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.track({
-          player: myPlayer,
-          isHost,
-        });
-      }
-    });
-
-    channelRef.current = channel;
-  }, [setRoomState]);
 
   const createRoom = async () => {
     if (!nickname.trim() && !isLoggedIn) {
@@ -169,7 +107,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
 
     const roomCode = generateRoomCode();
     const player: BombPartyPlayer = {
-      id: playerIdRef.current,
+      id: playerId,
       nickname: finalNickname,
       lives: settings.startLives,
       score: 0,
@@ -191,7 +129,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     };
 
     setRoomState(newRoom);
-    subscribeToRoom(roomCode, player, settings, true);
+    subscribeToChannel(roomCode, player, settings, true);
     persistCreateRoom(roomCode, settings);
     setLoading(false);
   };
@@ -206,7 +144,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     const upperCode = code.trim().toUpperCase();
     const avatarUrl = finalNickname ? `https://mc-heads.net/avatar/${finalNickname}/64` : undefined;
 
-    // Verifica che la stanza esista nel database
+    // Verify room exists in DB
     const { data: roomData } = await supabase
       .from('bomb_party_rooms')
       .select('status, settings, host_id, game_state')
@@ -223,24 +161,23 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     const { data: { user } } = await supabase.auth.getUser();
     const amIHost = user ? roomData.host_id === user.id : false;
 
-    // Se la partita è in corso, prova a riconnettermi se ero un player
+    // If game is in progress, try to reconnect as player or join as spectator
     if (roomData.status === 'playing' && roomData.game_state) {
       const savedState = roomData.game_state as RoomState;
-      const myPlayerInGame = savedState.players.find(
-        p => p.nickname === finalNickname
-      );
+      const myPlayerInGame = savedState.players.find(p => p.nickname === finalNickname);
 
       if (myPlayerInGame) {
-        // RECONNECT: ero un giocatore attivo, rientro con il mio stato
+        // RECONNECT: I was an active player, rejoin with my saved state
+        // Restore player ID for host detection
+        subscribeToChannel(upperCode, myPlayerInGame, savedState.settings, myPlayerInGame.isHost);
         setRoomState(savedState);
-        // Subscribe al canale di gioco - il game component si occuperà del resto
         setLoading(false);
         return;
       }
 
-      // Non ero un player → spettatore
+      // Not a player → spectator
       const spectator: BombPartyPlayer = {
-        id: playerIdRef.current,
+        id: playerId,
         nickname: finalNickname,
         lives: 0,
         score: 0,
@@ -250,7 +187,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
         isSpectator: true,
       };
 
-      // Set state as the saved game state but I'm a spectator watching
+      subscribeToChannel(upperCode, spectator, savedState.settings, false);
       setRoomState({
         ...savedState,
         players: [...savedState.players, spectator],
@@ -259,9 +196,9 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       return;
     }
 
-    // Stanza in waiting - join normale
+    // Room in waiting state → normal join
     const player: BombPartyPlayer = {
-      id: playerIdRef.current,
+      id: playerId,
       nickname: finalNickname,
       lives: DEFAULT_SETTINGS.startLives,
       score: 0,
@@ -285,7 +222,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     };
 
     setRoomState(joinedRoom);
-    subscribeToRoom(upperCode, player, roomSettings, amIHost);
+    subscribeToChannel(upperCode, player, roomSettings, amIHost);
     setLoading(false);
   };
 
@@ -315,6 +252,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       ...p,
       lives: roomState.settings.startLives,
       score: 0,
+      hasShield: false,
     }));
 
     const startedRoom: RoomState = {
@@ -328,9 +266,9 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
       currentBomb: rollBombEvent(true),
     };
 
-    // Broadcast game start to all players
-    if (channelRef.current) {
-      await channelRef.current.send({
+    // Broadcast game start to all players via the unified channel
+    if (channel) {
+      await channel.send({
         type: 'broadcast',
         event: 'game_start',
         payload: startedRoom,
@@ -338,9 +276,11 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
     }
 
     setRoomState(startedRoom);
+    // Persist initial game state for reconnect
+    saveGameState(startedRoom);
   };
 
-  const isHost = roomState?.players.some(p => p.isHost && p.id === playerIdRef.current);
+  const isHost = roomState?.players.some(p => p.isHost && p.id === playerId);
 
   // Lobby waiting room
   if (roomState) {
@@ -384,7 +324,7 @@ const BombPartyLobby: React.FC<Props> = ({ nickname, setNickname, roomState, set
                 </div>
                 <span className="font-headline-md text-[14px] text-white">
                   {player.nickname}
-                  {player.id === playerIdRef.current && ' (tu)'}
+                  {player.id === playerId && ' (tu)'}
                 </span>
                 {player.isHost && (
                   <span className="ml-auto rounded-lg border-[2px] border-black bg-orange-500 px-2 py-0.5 font-label-caps text-[10px] text-white">
