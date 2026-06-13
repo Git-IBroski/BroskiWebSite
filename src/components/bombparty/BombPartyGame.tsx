@@ -16,6 +16,8 @@ interface Props {
   channel: RealtimeChannel | null;
   playerId: string;
   onLeave: () => void;
+  /** Debug only: freeze the timer completely (no countdown). */
+  debugFreezeTimer?: boolean;
 }
 
 function getPlayerPositions(count: number): { top: string; left: string }[] {
@@ -86,7 +88,7 @@ const gameStyles = `
   }
 `;
 
-const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, channel, playerId: _playerId, onLeave }) => {
+const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, channel, playerId: _playerId, onLeave, debugFreezeTimer }) => {
   void _playerId; // kept for future use (e.g. player-specific logic)
   const [input, setInput] = useState('');
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' | 'event' | '' }>({ message: '', type: '' });
@@ -245,6 +247,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
 
   // Authoritative timer: only runs on the current turn player's client
   useEffect(() => {
+    if (debugFreezeTimer) return;
     if (roomState.status !== 'playing') return;
     if (timerRef.current) clearInterval(timerRef.current);
     if (!isMyTurn) return;
@@ -260,16 +263,17 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     }, 1000);
 
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn, effectiveTurnTime]);
+  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn, effectiveTurnTime, debugFreezeTimer]);
 
   // Visual countdown timer for non-active players
   useEffect(() => {
+    if (debugFreezeTimer) return;
     if (roomState.status !== 'playing' || isMyTurn) return;
     const visualTimer = setInterval(() => {
       setTimeLeft((prev) => (prev <= 0 ? 0 : prev - 1));
     }, 1000);
     return () => clearInterval(visualTimer);
-  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn]);
+  }, [roomState.currentTurnIndex, roomState.roundNumber, roomState.status, isMyTurn, debugFreezeTimer]);
 
   // FALLBACK TIMER: exactly ONE designated client fires the time-up if the
   // active player disconnects. Authority = lowest-index alive non-spectator

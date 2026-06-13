@@ -128,7 +128,6 @@ const BombPartyDebug: React.FC = () => {
         <BombPartyGameDebugWrapper
           roomState={{ ...roomState, currentTurnIndex: currentTurn % playerCount }}
           setRoomState={setRoomState}
-          nickname="Pirata91"
           timeLeftOverride={timeLeft}
         />
       </div>
@@ -146,19 +145,19 @@ const BombPartyDebug: React.FC = () => {
 const BombPartyGameDebugWrapper: React.FC<{
   roomState: RoomState;
   setRoomState: (r: RoomState | null | ((prev: RoomState | null) => RoomState | null)) => void;
-  nickname: string;
   timeLeftOverride: number;
-}> = ({ roomState, setRoomState, nickname, timeLeftOverride: _timeLeftOverride }) => {
+}> = ({ roomState, setRoomState, timeLeftOverride: _timeLeftOverride }) => {
   void _timeLeftOverride; // visual only — the game component manages its own timer
 
   return (
     <BombPartyGame
       roomState={roomState}
       setRoomState={setRoomState}
-      nickname={nickname}
+      nickname="__DEBUG_SPECTATOR__"
       channel={null}
-      playerId="p1"
+      playerId="debug-spectator"
       onLeave={() => window.location.href = '/bomb-party'}
+      debugFreezeTimer
     />
   );
 };
