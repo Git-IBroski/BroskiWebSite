@@ -576,7 +576,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
   const isDanger = timeLeft <= 3 && roomState.status === 'playing';
 
   // Circular timer ring geometry
-  const RING_RADIUS = 110;
+  const RING_RADIUS = 118;
   const RING_CIRC = 2 * Math.PI * RING_RADIUS;
   const ringProgress = Math.max(0, Math.min(1, timeLeft / effectiveTurnTime));
   const ringColor = timeLeft <= 2 ? '#dc2626' : timeLeft <= 4 ? '#f97316' : '#22c55e';
@@ -728,12 +728,12 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
 
         {/* Bomb center with circular timer ring */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="relative flex h-[260px] w-[260px] items-center justify-center sm:h-[280px] sm:w-[280px]">
+          <div className="relative flex h-[272px] w-[272px] items-center justify-center sm:h-[296px] sm:w-[296px]">
             {/* SVG circular timer ring */}
-            <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 280 280">
-              <circle cx="140" cy="140" r={RING_RADIUS} fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="12" />
+            <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 296 296">
+              <circle cx="148" cy="148" r={RING_RADIUS} fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="12" />
               <circle
-                cx="140" cy="140" r={RING_RADIUS} fill="none"
+                cx="148" cy="148" r={RING_RADIUS} fill="none"
                 stroke={ringColor} strokeWidth="12" strokeLinecap="round"
                 strokeDasharray={RING_CIRC}
                 strokeDashoffset={RING_CIRC * (1 - ringProgress)}
@@ -756,7 +756,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
                 className="material-symbols-outlined"
                 style={{
                   position: 'absolute', left: '50%', top: 0,
-                  transform: 'translate(-50%, -108px)',
+                  transform: 'translate(-50%, -127px)',
                   fontSize: '40px', lineHeight: 1, color: '#22c55e',
                   fontVariationSettings: "'FILL' 1",
                   filter: 'drop-shadow(0 0 2px rgba(0,0,0,1)) drop-shadow(0 2px 2px rgba(0,0,0,0.8))',
@@ -769,7 +769,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
             {/* Bomb image + syllable (shifted up and right for visual balance) */}
             <div
               className="relative"
-              style={{ transform: 'translate(6px, -10px)', animation: `bomb-shake ${Math.max(0.05, 0.5 - shakeIntensity * 0.45)}s infinite` }}
+              style={{ transform: 'translate(10px, -16px)', animation: `bomb-shake ${Math.max(0.05, 0.5 - shakeIntensity * 0.45)}s infinite` }}
             >
               <div className="relative h-40 w-40 sm:h-52 sm:w-52">
                 <img
