@@ -405,7 +405,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
         >
           <div className="flex flex-col items-center gap-2">
             {/* Immagine bomba */}
-            <div className={`relative h-40 w-40 sm:h-52 sm:w-52`} style={{ transform: 'translateX(3px)' }}>
+            <div className={`relative h-40 w-40 sm:h-52 sm:w-52`} style={{ transform: 'translateX(7px)' }}>
               <img
                 src={currentBombEvent.image}
                 alt={currentBombEvent.name}
@@ -414,7 +414,7 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname }) =
               {/* Sillaba centrata sul corpo della bomba */}
               <div
                 className="absolute flex items-center justify-center"
-                style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                style={{ top: '74%', left: '50%', transform: 'translate(-50%, -50%) translateY(-15px)' }}
               >
                 <span className="font-headline-lg text-[28px] uppercase tracking-wider text-white sm:text-[36px]"
                   style={{ textShadow: '0 0 10px rgba(0,0,0,0.9), 0 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7)' }}>
