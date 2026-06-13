@@ -409,16 +409,19 @@ const BombPartyGame: React.FC<Props> = ({ roomState, setRoomState, nickname, cha
     if (usedWords.has(word)) {
       setFeedback({ message: 'Parola già usata!', type: 'error' });
       playError();
+      setInput('');
       return;
     }
     if (!word.includes(roomState.currentSyllable.toLowerCase())) {
       setFeedback({ message: `Deve contenere "${roomState.currentSyllable}"!`, type: 'error' });
       playError();
+      setInput('');
       return;
     }
     if (!validateWord(word)) {
       setFeedback({ message: 'Parola non valida!', type: 'error' });
       playError();
+      setInput('');
       return;
     }
 
