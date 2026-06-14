@@ -3,6 +3,19 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "framework": null,
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "discord.ibroski.net"
+        }
+      ],
+      "destination": "https://discord.gg/IL_TUO_CODICE_INVITO",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/.well-known/discord",
@@ -15,12 +28,8 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/.well-known/discord",
-      "destination": "/.well-known/discord"
-    },
     { 
-      "source": "/(.*)", 
+      "source": "/((?!\\.well-known\/).*)", 
       "destination": "/index.html" 
     }
   ]
