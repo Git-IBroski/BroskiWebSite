@@ -319,7 +319,7 @@ const translations = {
 
     // Wiki Content
     'wiki.community.title': 'La Community',
-    'wiki.community.intro': 'è un gruppo di giocatori italiani uniti dalla passione per Minecraft e dai contenuti caotici che produciamo insieme. Siamo una community aperta dove tutti possono unirsi, partecipare e contribuire alle varie attività che organizziamo.',
+    'wiki.community.intro': 'è un gruppo di giocatori italiani uniti dalla passione per Minecraft e dai contenuti che produciamo insieme. Siamo una community aperta dove tutti i content creator, piccoli e grandi, possono unirsi, partecipare e contribuire alle varie attività che organizziamo.',
     'wiki.community.discord.desc': 'Il cuore della community. Canali vocali attivi 24/7, eventi, annunci e dove tutto inizia.',
     'wiki.community.smp.desc': 'Il nostro server Minecraft anarchico dove i creator registrano i loro contenuti più iconici.',
     'wiki.community.tierlist.desc': 'Classifiche competitive in 11 categorie PvP diverse. HT (High Tier) e LT (Low Tier).',
