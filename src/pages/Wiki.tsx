@@ -364,7 +364,7 @@ const Wiki: React.FC = () => {
               </p>
               <div className="flex flex-wrap justify-center gap-4">
                 <a 
-                  href="https://discord.gg/8CvbRWzyjA" 
+                  href="https://discord.ibroski.net/" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-black bg-white px-6 py-3 font-headline-md text-[18px] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1"
