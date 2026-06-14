@@ -37,6 +37,7 @@ import MyIdeas from './pages/MyIdeas'
 import Profile from './pages/Profile'
 import BombParty from './pages/BombParty'
 import BombPartyDebug from './pages/BombPartyDebug'
+import { RouteMeta } from './components/RouteMeta'
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
       <AuthProvider>
         <TransitionProvider>
           <SmoothScroll>
+            <RouteMeta />
             <ScrollToTop />
             <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
               <Header />
