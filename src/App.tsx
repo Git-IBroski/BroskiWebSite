@@ -8,7 +8,6 @@ import { AuthProvider } from './context/AuthContext'
 import RequireAuth from './components/RequireAuth'
 import Home from './pages/Home'
 import TierList from './pages/TierList'
-import Social from './pages/Social'
 import Projects from './pages/Projects'
 import Wiki from './pages/Wiki'
 import SignIn from './pages/SignIn'
@@ -38,6 +37,8 @@ import Profile from './pages/Profile'
 import BombParty from './pages/BombParty'
 import BombPartyDebug from './pages/BombPartyDebug'
 import { RouteMeta } from './components/RouteMeta'
+import ManteinancePage from './pages/ManteinancePage'
+import TierlistMaintenance from './pages/TierlistMaintenance'
 
 function App() {
   return (
@@ -60,11 +61,11 @@ function App() {
 
                   {/* Protected routes — require login + accepted terms */}
                   <Route path="/" element={<Home />} />
-                  <Route path="/tierlist" element={<TierList></TierList>} />
-                  <Route path="/social" element={<Social />} />
+                  <Route path="/tierlist" element={<TierlistMaintenance />} />
+                  <Route path="/social" element={<ManteinancePage />} />
                   <Route path="/progetti" element={<Projects />} />
                   <Route path="/wiki" element={<Wiki />} />
-                  <Route path="/countdown" element={<RequireAuth><RequireAdmin><Countdown /></RequireAdmin></RequireAuth>} />
+                  <Route path="/countdown" element={<Countdown />} />
                   <Route path="/store" element={<RequireAuth><RequireAdmin><Store /></RequireAdmin></RequireAuth>} />
                   <Route path="/contatti" element={<Contacts />} />
                   <Route path="/mods" element={<Mods />} />

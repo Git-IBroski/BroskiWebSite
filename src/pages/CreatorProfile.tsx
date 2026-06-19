@@ -48,7 +48,7 @@ const CreatorProfile: React.FC = () => {
   };
 
   return (
-    <PageAnimator className="relative w-full overflow-hidden px-4 pb-14 pt-8 sm:px-margin">
+    <PageAnimator className="relative w-full overflow-hidden px-4 pb-14 pt-8 sm:px-margin select-none">
       <div className="relative z-10 mx-auto w-full max-w-[900px]">
         <Link to="/mods/followed" className="mb-6 inline-flex items-center gap-2 rounded-xl border-[2px] border-black bg-surface-container-high px-4 py-2 font-label-caps text-[11px] text-on-surface-variant shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5">
           <span className="material-symbols-outlined text-[16px]">arrow_back</span>

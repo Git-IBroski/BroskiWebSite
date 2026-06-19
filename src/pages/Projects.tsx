@@ -35,7 +35,7 @@ const ProjectAction = ({ href, icon, children, className }: { href: string; icon
 const Projects: React.FC = () => {
   const { t } = useLanguage();
   return (
-    <PageAnimator className="relative flex-grow overflow-hidden px-4 py-8 sm:px-margin">
+    <PageAnimator className="relative flex-grow overflow-hidden px-4 py-8 sm:px-margin select-none">
       <div className="pointer-events-none absolute left-[-8rem] top-24 h-72 w-72 rounded-full bg-secondary-container/20 blur-3xl"></div>
       <div className="pointer-events-none absolute right-[-10rem] top-[36rem] h-80 w-80 rounded-full bg-primary-container/20 blur-3xl"></div>
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-margin">

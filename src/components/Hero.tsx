@@ -61,7 +61,7 @@ const Hero: React.FC = () => {
             {t('hero.badge')}
           </div>
 
-          <div>
+          <div className='select-none'>
             <h1 className="font-headline-lg text-[54px] uppercase leading-[0.88] tracking-tighter text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)] sm:text-[82px] lg:text-[108px]">
               BROSKI
               <span className="block text-secondary-container">COMMUNITY</span>
@@ -71,7 +71,7 @@ const Hero: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex w-full flex-wrap gap-3">
+          <div className="flex w-full flex-wrap gap-3 select-none">
             <a 
               href={LINKS_CONFIG.discord} 
               target="_blank" 
@@ -90,17 +90,17 @@ const Hero: React.FC = () => {
             </Link>
           </div>
 
-          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 select-none">
             <div className="rounded-3xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-headline-md text-3xl text-white">9</span>
+                <span className="font-headline-md text-3xl text-white">22</span>
                 <span className="material-symbols-outlined rounded-2xl border-2 border-black bg-primary-container p-2 text-2xl text-white">groups</span>
               </div>
               <p className="mt-2 font-label-caps text-[11px] text-on-surface-variant">{t('hero.stats.crew')}</p>
             </div>
             <div className="rounded-3xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
               <div className="flex items-center justify-between gap-3">
-                <span className="font-headline-md text-3xl text-white">SMP</span>
+                <span className="font-headline-md text-2xl text-white">discord</span>
                 <span className="material-symbols-outlined rounded-2xl border-2 border-black bg-secondary-container p-2 text-2xl text-white">dns</span>
               </div>
               <p className="mt-2 font-label-caps text-[11px] text-on-surface-variant">{t('hero.stats.server')}</p>

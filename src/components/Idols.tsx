@@ -20,37 +20,6 @@ interface IdolData {
 }
 
 const idolsData: IdolData[] = [
-  {
-    name: 'un1verso',
-    channelId: 'UCU7QmMl0-MvJZBBq8MhkAiQ',
-    channelLink: 'https://youtube.com/@un1versoMC',
-    colorClass: 'bg-primary',
-    textColorClass: 'text-primary',
-    btnTextColorClass: 'text-on-primary',
-    description: "Un player (non) normale di Minecraft. Sempre pronto a creare nuove dinamiche e storie sul server. (è l'universo, btw)",
-    defaultImage: 'https://placehold.co/600x350/2E5BFF/FFFFFF?text=un1verso'
-  },
-  {
-    name: 'BlimMC',
-    channelId: 'UCHFhHTPQKk8uffihq4TbY9Q',
-    channelLink: 'https://youtube.com/@BlimMC',
-    colorClass: 'bg-secondary',
-    textColorClass: 'text-secondary',
-    btnTextColorClass: 'text-on-secondary',
-    description: "E' molto vivace e ha sempre voglia di registrare nuovi video e proporre idee perfette.",
-    defaultImage: 'https://placehold.co/600x350/FF1F44/FFFFFF?text=Blim'
-  },
-  {
-    name: 'Muffin',
-    channelId: 'UCDDsl6EiHfLtJFLQwfpdgvA',
-    channelLink: 'https://youtube.com/@il_Muffin',
-    colorClass: 'bg-error',
-    textColorClass: 'text-error',
-    btnTextColorClass: 'text-on-error',
-    description: "E' uno dei più skillati del gruppo. E' determinato, saggio e in grado di fare qualunque cosa se vuole.",
-    defaultImage: 'https://placehold.co/600x350/FF1F44/FFFFFF?text=Muffin',
-    fallbackVideoUrl: 'https://www.youtube.com/watch?v=BBUWO2U8jrA'
-  }
 ];
 
 // Estrae l'ID video da un URL YouTube
@@ -245,6 +214,9 @@ const Idols: React.FC = () => {
           <IdolCard key={idol.name} data={idol} />
         ))}
       </div>
+      <p className="relative z-10 mb-0 mt-4 w-full rounded-3xl border-[3px] border-black bg-surface-container-high p-4 font-body-sm text-body-sm text-on-surface-variant text-center">
+        {t('idols.become')}
+      </p>
     </section>
   );
 };
