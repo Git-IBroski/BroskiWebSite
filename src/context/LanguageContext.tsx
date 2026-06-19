@@ -1087,7 +1087,7 @@ const translations = {
     
     // Maintenance
     'maintenance.message': "We're performing scheduled maintenance. Please check back soon — we're fixing a few things.",
-    "maintenance.tierlist_message": "This page should be filled with tests made by some new testers we need.",
+    "maintenance.tierlist_message": "If you're a tester, this page is waiting just YOU! Apply to tier test our members sending a DM to z3phmc on Discord, or joining our Discord server on discord.ibroski.net",
 
     // Admin Panel
     'admin.title': 'Admin Panel',
