@@ -151,7 +151,13 @@ const Header: React.FC = () => {
 
           {/* Profile button */}
           <div className="relative" ref={menuRef}>
-            <div className="relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <div
+              className={`relative flex items-center gap-2 border-[3px] border-black bg-surface-container px-2 py-1 transition-all duration-300 ease-out ${
+                menuOpen
+                  ? 'w-44 justify-end rounded-2xl rounded-b-none shadow-none delay-0'
+                  : 'w-auto rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] delay-300'
+              }`}
+            >
               {/* Minecraft IGN that slides out to the left when opening; links to /profilo */}
               <TransitionLink
                 to="/profilo"
@@ -180,8 +186,8 @@ const Header: React.FC = () => {
               )}
             </div>
             <div
-              className={`absolute right-0 top-full mt-2 flex w-44 flex-col gap-2 overflow-hidden rounded-2xl border-[3px] border-black bg-surface-container p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] origin-top transition-all duration-300 ease-out ${
-                menuOpen ? 'max-h-[400px] opacity-100 delay-300' : 'pointer-events-none max-h-0 border-transparent py-0 opacity-0 delay-0'
+              className={`absolute right-0 top-full flex w-44 flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 border-black bg-surface-container px-3 origin-top transition-all duration-300 ease-out ${
+                menuOpen ? 'max-h-[400px] py-3 opacity-100 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] delay-300' : 'pointer-events-none max-h-0 py-0 opacity-0 shadow-none delay-0'
               }`}
             >
               {profile.role === 'admin' && (
