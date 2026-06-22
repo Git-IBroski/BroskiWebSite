@@ -12,6 +12,7 @@
  * _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 10.5_
  */
 import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import PageAnimator from '../../components/PageAnimator';
 import { useTierList } from './useTierList';
 import { groupByTier } from './ordering';
@@ -71,6 +72,18 @@ const DemonTierListPage: React.FC = () => {
             Community demon completions, ranked by difficulty tier.
           </p>
         </header>
+
+        <div className="mb-8 flex items-center gap-6 font-headline-md uppercase tracking-tight">
+          <span className="text-yellow-400 underline decoration-4 underline-offset-8">
+            Demon List
+          </span>
+          <Link
+            to="/stats"
+            className="text-on-surface-variant transition-colors hover:text-white"
+          >
+            Stats Viewer
+          </Link>
+        </div>
 
         {loading ? (
           <LoadingState />

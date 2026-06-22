@@ -122,6 +122,12 @@ const Header: React.FC = () => {
         >
           Mods
         </TransitionLink>
+        <TransitionLink 
+          to="/stats" 
+          className={`${location.pathname === '/stats' || location.pathname === '/demon-tier-list' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
+        >
+          Stats
+        </TransitionLink>
       </div>
       {user && profile?.minecraft_username ? (
         <div className="flex items-center gap-2">
