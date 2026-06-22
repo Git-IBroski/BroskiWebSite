@@ -133,8 +133,8 @@ const Header: React.FC = () => {
             <span className="material-symbols-outlined text-[22px] text-white">{mobileMenuOpen ? 'close' : 'menu'}</span>
           </button>
 
-          {/* Language Toggle - visible to all */}
-          <div className="hidden sm:flex items-center gap-1 rounded-lg border-2 border-black bg-black p-1">
+          {/* Language Toggle - shown outside the dropdown only when navbar is attached to the top */}
+          <div className={`${isScrolled ? 'hidden' : 'hidden sm:flex'} items-center gap-1 rounded-lg border-2 border-black bg-black p-1`}>
             <button
               onClick={() => setLanguage('it')}
               className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
@@ -187,9 +187,26 @@ const Header: React.FC = () => {
             </div>
             <div
               className={`absolute left-0 right-0 top-full flex flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 px-3 origin-top transition-all duration-300 ease-out ${
-                menuOpen ? 'max-h-[260px] py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300' : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
+                menuOpen ? `${isScrolled ? 'max-h-[320px]' : 'max-h-[260px]'} py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300` : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
               }`}
             >
+              {/* Language Toggle - moved inside the dropdown when navbar is detached from the top */}
+              {isScrolled && (
+                <div className="flex items-center justify-center gap-1 rounded-xl border-[3px] border-black bg-black p-1">
+                  <button
+                    onClick={() => setLanguage('it')}
+                    className={`flex-1 rounded px-2 py-1.5 font-label-caps text-[12px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+                  >
+                    IT
+                  </button>
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex-1 rounded px-2 py-1.5 font-label-caps text-[12px] transition-all ${language === 'en' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+                  >
+                    EN
+                  </button>
+                </div>
+              )}
               {profile.role === 'admin' && (
                 <TransitionLink
                   to="/admin"
