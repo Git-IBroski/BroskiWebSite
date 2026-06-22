@@ -7,6 +7,7 @@
  * computed upstream by the pure `scoring.ts` helpers; this file only renders.
  */
 import React from 'react';
+import { useLanguage } from '../../context/LanguageContext';
 import type { DifficultyTier } from './ordering';
 import {
   formatPoints,
@@ -205,7 +206,9 @@ export interface DemonRankViewProps {
 const PlayerDetail: React.FC<{
   stats: PlayerStats;
   position: number | null;
-}> = ({ stats, position }) => (
+}> = ({ stats, position }) => {
+  const { t } = useLanguage();
+  return (
   <div className="flex flex-col gap-5">
     {/* Header */}
     <div className="flex items-center gap-4 rounded-2xl border-[3px] border-black bg-surface-container p-5 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
@@ -218,7 +221,7 @@ const PlayerDetail: React.FC<{
       </span>
       <div className="min-w-0">
         <p className="font-label-caps text-[11px] uppercase tracking-wide text-on-surface-variant">
-          Rango {position !== null ? `#${position}` : '—'} · {stats.rank.label}
+          {t('demonrank.detail.rank')} {position !== null ? `#${position}` : '—'} · {stats.rank.label}
         </p>
         <h2 className="truncate font-headline-lg text-[30px] leading-none text-white">
           {stats.username}
@@ -230,14 +233,14 @@ const PlayerDetail: React.FC<{
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <StatTile
         value={formatPoints(stats.totalPoints)}
-        label="Punti totali"
+        label={t('demonrank.detail.points')}
         icon="bolt"
         iconClass="bg-tertiary text-black"
         valueClass="text-tertiary"
       />
       <StatTile
         value={stats.completedCount}
-        label="Demons superati"
+        label={t('demonrank.detail.beaten')}
         icon="task_alt"
         iconClass="bg-red-500 text-white"
       />
@@ -251,7 +254,7 @@ const PlayerDetail: React.FC<{
             '—'
           )
         }
-        label="Demon più difficile"
+        label={t('demonrank.detail.hardest')}
         sub={
           stats.hardestDemon
             ? `${TIER_LABEL[stats.hardestDemon.difficulty_tier]} · ${stats.hardestDemon.percentage}%`
@@ -270,15 +273,15 @@ const PlayerDetail: React.FC<{
         <CardHeading
           icon="trending_up"
           iconClass="bg-red-500 text-white"
-          title="In corso"
+          title={t('demonrank.card.inprogress')}
           count={stats.inProgress.length}
         />
         {stats.inProgress.length === 0 ? (
           <p className="font-body-sm text-[13px] text-on-surface-variant/80">
-            Nessun demon in corso.
+            {t('demonrank.card.inprogress_empty')}
           </p>
         ) : (
-          <ul className="dtt-scroll -mr-2 flex flex-1 flex-col gap-3 overflow-y-auto pr-2">
+          <ul className="dtt-scroll -mr-2 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2">
             {stats.inProgress.map((d) => (
               <ProgressRow key={d.level_id} demon={d} />
             ))}
@@ -291,15 +294,15 @@ const PlayerDetail: React.FC<{
         <CardHeading
           icon="military_tech"
           iconClass="bg-tertiary text-black"
-          title="Completati"
+          title={t('demonrank.card.completed')}
           count={stats.completed.length}
         />
         {stats.completed.length === 0 ? (
           <p className="font-body-sm text-[13px] text-on-surface-variant/80">
-            Nessun demon completato al 100%.
+            {t('demonrank.card.completed_empty')}
           </p>
         ) : (
-          <ul className="dtt-scroll -mr-2 flex flex-1 flex-col gap-1.5 overflow-y-auto pr-2">
+          <ul className="dtt-scroll -mr-2 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-2">
             {stats.completed.map((d) => (
               <CompletedRow key={d.level_id} demon={d} />
             ))}
@@ -308,7 +311,8 @@ const PlayerDetail: React.FC<{
       </div>
     </div>
   </div>
-);
+  );
+};
 
 /**
  * The DemonRank board: leaderboard + selected-player detail. Renders an empty
@@ -320,6 +324,7 @@ const DemonRankView: React.FC<DemonRankViewProps> = ({
   selected,
   onSelect,
 }) => {
+  const { t } = useLanguage();
   if (leaderboard.length === 0) {
     return (
       <div
@@ -329,9 +334,9 @@ const DemonRankView: React.FC<DemonRankViewProps> = ({
         <span className="material-symbols-outlined text-[64px] text-on-surface-variant/40">
           leaderboard
         </span>
-        <p className="font-headline-md text-[18px] text-white">Ancora nessun dato</p>
+        <p className="font-headline-md text-[18px] text-white">{t('demonrank.empty.title')}</p>
         <p className="font-body-sm text-on-surface-variant">
-          Lancia Geometry Dash con la mod per inviare i tuoi record.
+          {t('demonrank.empty.desc')}
         </p>
       </div>
     );
@@ -346,10 +351,10 @@ const DemonRankView: React.FC<DemonRankViewProps> = ({
       <aside className="self-start rounded-2xl border-[3px] border-black bg-surface-container-high/40 p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] lg:sticky lg:top-24">
         <span className="mb-3 inline-flex items-center gap-2 rounded-full border-[2px] border-black bg-tertiary px-3 py-1 font-label-caps text-[10px] uppercase text-black">
           <span className="material-symbols-outlined text-[14px]">emoji_events</span>
-          Leaderboard
+          {t('demonrank.board.badge')}
         </span>
         <h2 className="mb-4 font-headline-lg text-[26px] uppercase tracking-tight text-white">
-          Classifica
+          {t('demonrank.board.title')}
         </h2>
         <div className="flex flex-col gap-2.5">
           {leaderboard.map((entry) => (
@@ -369,7 +374,7 @@ const DemonRankView: React.FC<DemonRankViewProps> = ({
       ) : (
         <div className="flex items-center justify-center rounded-2xl border-[3px] border-black bg-surface-container p-12 text-center shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
           <p className="font-body-sm text-on-surface-variant">
-            Seleziona un giocatore dalla classifica.
+            {t('demonrank.detail.select')}
           </p>
         </div>
       )}

@@ -12,6 +12,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import PageAnimator from '../../components/PageAnimator';
+import { useLanguage } from '../../context/LanguageContext';
 import { usePlayerStats } from './usePlayerStats';
 import DemonRankView from './DemonRankView';
 import {
@@ -30,20 +31,23 @@ const LoadingState: React.FC = () => (
 const ErrorState: React.FC<{ message: string; onRetry: () => void }> = ({
   message,
   onRetry,
-}) => (
-  <div className="flex flex-col items-center gap-4 rounded-2xl border-[3px] border-black bg-surface-container p-12 text-center shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-    <span className="material-symbols-outlined text-[64px] text-red-400/60">error</span>
-    <p className="font-headline-md text-[18px] text-white">Impossibile caricare la classifica</p>
-    <p className="max-w-md font-body-sm text-on-surface-variant">{message}</p>
-    <button
-      onClick={onRetry}
-      className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-black bg-primary-container px-6 py-3 font-headline-md text-[15px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none"
-    >
-      <span className="material-symbols-outlined text-[20px]">refresh</span>
-      Riprova
-    </button>
-  </div>
-);
+}) => {
+  const { t } = useLanguage();
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-2xl border-[3px] border-black bg-surface-container p-12 text-center shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+      <span className="material-symbols-outlined text-[64px] text-red-400/60">error</span>
+      <p className="font-headline-md text-[18px] text-white">{t('demonrank.error.title')}</p>
+      <p className="max-w-md font-body-sm text-on-surface-variant">{message}</p>
+      <button
+        onClick={onRetry}
+        className="inline-flex items-center gap-2 rounded-2xl border-[3px] border-black bg-primary-container px-6 py-3 font-headline-md text-[15px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none"
+      >
+        <span className="material-symbols-outlined text-[20px]">refresh</span>
+        {t('demonrank.error.retry')}
+      </button>
+    </div>
+  );
+};
 
 /** Difficulty tiers ordered hardest → easiest, for the points legend. */
 const TIER_ORDER: { tier: DifficultyTier; label: string; chip: string }[] = [
@@ -55,108 +59,110 @@ const TIER_ORDER: { tier: DifficultyTier; label: string; chip: string }[] = [
 ];
 
 /** Dedicated hero section, styled like the other pages. */
-const Hero: React.FC = () => (
-  <header className="relative overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-    <div
-      className="absolute inset-0 bg-surface-container-lowest"
-      style={{
-        backgroundImage:
-          'radial-gradient(rgba(255,255,255,0.18) 2px, transparent 2px)',
-        backgroundSize: '26px 26px',
-        opacity: 0.4,
-      }}
-    />
-    <div className="pointer-events-none absolute right-[-6rem] top-[-4rem] h-64 w-64 rounded-full bg-tertiary/20 blur-3xl" />
-    <div className="relative z-10 p-8 md:p-12">
-      <div className="mb-6 inline-flex -rotate-2 items-center gap-2 rounded-2xl border-[3px] border-black bg-tertiary px-4 py-2 font-label-caps text-label-caps text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <span className="material-symbols-outlined text-[20px]">stadia_controller</span>
-        Geometry Dash · Community
+const Hero: React.FC = () => {
+  const { t } = useLanguage();
+  return (
+    <header className="relative overflow-hidden rounded-[2rem] border-[4px] border-black bg-surface-container shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
+      <div
+        className="absolute inset-0 bg-surface-container-lowest"
+        style={{
+          backgroundImage:
+            'radial-gradient(rgba(255,255,255,0.18) 2px, transparent 2px)',
+          backgroundSize: '26px 26px',
+          opacity: 0.4,
+        }}
+      />
+      <div className="pointer-events-none absolute right-[-6rem] top-[-4rem] h-64 w-64 rounded-full bg-tertiary/20 blur-3xl" />
+      <div className="relative z-10 p-8 md:p-12">
+        <div className="mb-6 inline-flex -rotate-2 items-center gap-2 rounded-2xl border-[3px] border-black bg-tertiary px-4 py-2 font-label-caps text-label-caps text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+          <span className="material-symbols-outlined text-[20px]">stadia_controller</span>
+          {t('demonrank.hero.badge')}
+        </div>
+        <h1 className="mb-4 font-headline-lg text-[48px] uppercase leading-none tracking-tighter text-white drop-shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-[72px]">
+          {t('demonrank.hero.title')}{' '}
+          <span className="text-primary-container">{t('demonrank.hero.title_accent')}</span>
+        </h1>
+        <p className="max-w-2xl font-body-lg text-body-lg text-on-surface-variant">
+          {t('demonrank.hero.description')}
+        </p>
       </div>
-      <h1 className="mb-4 font-headline-lg text-[48px] uppercase leading-none tracking-tighter text-white drop-shadow-[5px_5px_0px_rgba(0,0,0,1)] md:text-[72px]">
-        DEMON <span className="text-primary-container">RANK</span>
-      </h1>
-      <p className="max-w-2xl font-body-lg text-body-lg text-on-surface-variant">
-        Scala la classifica della community guadagnando punti per ogni demon che
-        affronti. Più i demon sono difficili, più punti valgono. Completa al 100%
-        per il massimo e scala i ranghi.
-      </p>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 /** Compact "how it works" panel: points formula + tier weights + rank ladder. */
-const HowItWorksPanels: React.FC = () => (
-  <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-    {/* Points */}
-    <div className="rounded-2xl border-[3px] border-black bg-surface-container p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg border-[2px] border-black bg-tertiary text-black">
-          <span className="material-symbols-outlined text-[18px]">bolt</span>
-        </span>
-        <h3 className="font-headline-md text-[16px] uppercase tracking-tight text-white">
-          Come funzionano i punti
-        </h3>
-      </div>
-      <p className="mb-4 font-body-sm text-[13px] text-on-surface-variant">
-        Ogni demon assegna punti in base alla difficoltà. Un tentativo parziale
-        dà una quota proporzionale; il 100% dà il punteggio pieno.
-      </p>
-      <div className="mb-4 rounded-xl border-[2px] border-black bg-surface-container-high px-4 py-3 text-center font-headline-md text-[14px] text-white">
-        punti = (percentuale / 100) × valore del tier
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {TIER_ORDER.map(({ tier, label, chip }) => (
-          <span
-            key={tier}
-            className={`inline-flex items-center gap-1.5 rounded-lg border-[2px] border-black px-2.5 py-1 font-label-caps text-[11px] uppercase ${chip}`}
-          >
-            {label}
-            <span className="rounded bg-black/30 px-1.5 py-0.5 text-white">
-              {TIER_WEIGHT[tier]}
-            </span>
+const HowItWorksPanels: React.FC = () => {
+  const { t } = useLanguage();
+  return (
+    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      {/* Points */}
+      <div className="rounded-2xl border-[3px] border-black bg-surface-container p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border-[2px] border-black bg-tertiary text-black">
+            <span className="material-symbols-outlined text-[18px]">bolt</span>
           </span>
-        ))}
-      </div>
-    </div>
-
-    {/* Ranks */}
-    <div className="rounded-2xl border-[3px] border-black bg-surface-container p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg border-[2px] border-black bg-fuchsia-500 text-white">
-          <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
-        </span>
-        <h3 className="font-headline-md text-[16px] uppercase tracking-tight text-white">
-          I ranghi
-        </h3>
-      </div>
-      <p className="mb-4 font-body-sm text-[13px] text-on-surface-variant">
-        Il tuo rango dipende dai punti totali. Accumula punti per salire di
-        livello e superare gli altri giocatori in classifica.
-      </p>
-      <ul className="flex flex-col gap-2">
-        {RANK_LADDER.map((rank: RankTier) => (
-          <li
-            key={rank.id}
-            className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-high px-3 py-1.5"
-          >
+          <h3 className="font-headline-md text-[16px] uppercase tracking-tight text-white">
+            {t('demonrank.help.points.title')}
+          </h3>
+        </div>
+        <p className="mb-4 font-body-sm text-[13px] text-on-surface-variant">
+          {t('demonrank.help.points.desc')}
+        </p>
+        <div className="mb-4 rounded-xl border-[2px] border-black bg-surface-container-high px-4 py-3 text-center font-headline-md text-[14px] text-white">
+          {t('demonrank.help.points.formula')}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {TIER_ORDER.map(({ tier, label, chip }) => (
             <span
-              className={`rounded-md border-[2px] border-black px-2 py-0.5 font-label-caps text-[10px] uppercase ${rank.badgeClass}`}
+              key={tier}
+              className={`inline-flex items-center gap-1.5 rounded-lg border-[2px] border-black px-2.5 py-1 font-label-caps text-[11px] uppercase ${chip}`}
             >
-              {rank.label}
+              {label}
+              <span className="rounded bg-black/30 px-1.5 py-0.5 text-white">
+                {TIER_WEIGHT[tier]}
+              </span>
             </span>
-            <span className="font-body-sm text-[12px] text-on-surface-variant">
-              {rank.minPoints === 0
-                ? 'da 0 pts'
-                : `da ${rank.minPoints.toLocaleString('it-IT')} pts`}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
-);
+          ))}
+        </div>
+      </div>
+
+      {/* Ranks */}
+      <div className="rounded-2xl border-[3px] border-black bg-surface-container p-6 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border-[2px] border-black bg-fuchsia-500 text-white">
+            <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+          </span>
+          <h3 className="font-headline-md text-[16px] uppercase tracking-tight text-white">
+            {t('demonrank.help.ranks.title')}
+          </h3>
+        </div>
+        <p className="mb-4 font-body-sm text-[13px] text-on-surface-variant">
+          {t('demonrank.help.ranks.desc')}
+        </p>
+        <ul className="flex flex-col gap-2">
+          {RANK_LADDER.map((rank: RankTier) => (
+            <li
+              key={rank.id}
+              className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-high px-3 py-1.5"
+            >
+              <span
+                className={`rounded-md border-[2px] border-black px-2 py-0.5 font-label-caps text-[10px] uppercase ${rank.badgeClass}`}
+              >
+                {rank.label}
+              </span>
+              <span className="font-body-sm text-[12px] text-on-surface-variant">
+                {t('demonrank.help.ranks.from')} {rank.minPoints.toLocaleString()} pts
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+};
 
 const DemonRankPage: React.FC = () => {
+  const { t } = useLanguage();
   const { leaderboard, statsByPlayer, loading, error, refetch } = usePlayerStats();
   const [selectedUsername, setSelectedUsername] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -201,7 +207,7 @@ const DemonRankPage: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">help</span>
             </span>
             <span className="font-headline-md text-[15px] uppercase tracking-tight text-white">
-              Come funzionano punti e ranghi
+              {t('demonrank.help.toggle')}
             </span>
             <span
               className={`material-symbols-outlined ml-auto text-white transition-transform duration-300 ${
