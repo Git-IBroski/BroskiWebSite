@@ -1,12 +1,12 @@
-import { supabaseAdmin } from '../_lib/supabaseAdmin.ts';
-import { hashToken } from '../_lib/token.ts';
-import { normalizeAndValidate } from '../_lib/validate.ts';
+import { supabaseAdmin } from '../_lib/supabaseAdmin.js';
+import { hashToken } from '../_lib/token.js';
+import { normalizeAndValidate } from '../_lib/validate.js';
 import type {
   ErrorResponse,
   RecordInput,
   RecordResult,
   SuccessResponse,
-} from '../../src/features/demon-tier-tracker/types.ts';
+} from '../../src/features/demon-tier-tracker/types.js';
 
 /**
  * Records_API serverless handler — `POST /api/v1/records`.
