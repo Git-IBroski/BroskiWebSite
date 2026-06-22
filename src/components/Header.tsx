@@ -133,8 +133,12 @@ const Header: React.FC = () => {
             <span className="material-symbols-outlined text-[22px] text-white">{mobileMenuOpen ? 'close' : 'menu'}</span>
           </button>
 
-          {/* Language Toggle - shown outside the dropdown only when navbar is attached to the top */}
-          <div className={`${isScrolled ? 'hidden' : 'hidden sm:flex'} items-center gap-1 rounded-lg border-2 border-black bg-black p-1`}>
+          {/* Language Toggle - slides out to the right and collapses when the navbar detaches; matches the navbar animation */}
+          <div className={`hidden sm:flex items-center gap-1 rounded-lg border-2 bg-black overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+            isScrolled
+              ? 'max-w-0 -ml-2 translate-x-6 opacity-0 border-transparent p-0'
+              : 'max-w-[120px] ml-0 translate-x-0 opacity-100 border-black p-1'
+          }`}>
             <button
               onClick={() => setLanguage('it')}
               className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
