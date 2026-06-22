@@ -1,0 +1,10 @@
+# CMake / build artifacts
+build/
+build-*/
+cmake-build-*/
+
+# Geode build outputs
+*.geode
+
+# Misc
+.DS_Store
