@@ -5,9 +5,10 @@ import type { RecordInput } from '../../src/features/demon-tier-tracker/types';
 /**
  * Feature: demon-tier-tracker, Property 6: Level allow-listing
  *
- * For any request containing a record whose `level_id` is not present in the
- * `dtt_demons` table, the Records_API rejects the request with HTTP 400
- * (`unknown_level`) and persists no record from that request.
+ * For any request containing records whose `level_id` is not present in the
+ * `dtt_demons` table, the Records_API SKIPS those records (persisting nothing for
+ * them) while still storing the records whose level IS in the allow-list, and
+ * returns HTTP 200.
  *
  * Validates: Requirements 10.3
  *
@@ -191,7 +192,7 @@ const allKnownCaseArb = fc
 /* -------------------------------------------------------------------------- */
 
 describe('Property 6: Level allow-listing', () => {
-  it('rejects with 400 unknown_level and persists nothing when any record references an unknown level', async () => {
+  it('skips records with unknown levels (200) and persists only the known ones', async () => {
     await fc.assert(
       fc.asyncProperty(unknownCaseArb, async ({ knownIds, records }) => {
         resetState(knownIds);
@@ -199,19 +200,19 @@ describe('Property 6: Level allow-listing', () => {
         const res = makeRes();
         await handler(makeReq(records) as never, res as never);
 
-        // HTTP 400 with the unknown_level code naming level_id.
-        expect(res.statusCode).toBe(400);
-        expect(res.body?.code).toBe('unknown_level');
-        expect(res.body?.field).toBe('level_id');
+        // Unknown levels are skipped, not rejected: the request still succeeds.
+        expect(res.statusCode).toBe(200);
+        expect(res.body?.code).not.toBe('unknown_level');
 
-        // Persists nothing: the allow-list pre-check runs before any upsert, so
-        // no upsert_record RPC may have been issued for this request.
-        expect(h.state.upsertCalls).toHaveLength(0);
+        // Only the records whose level_id is in the allow-list are persisted.
+        const knownSet = new Set(knownIds);
+        const expectedStored = records.filter((r) => knownSet.has(r.level_id));
+        expect(h.state.upsertCalls).toHaveLength(expectedStored.length);
       }),
     );
   });
 
-  it('does not reject with unknown_level when every record references a known level', async () => {
+  it('persists every record when they all reference a known level', async () => {
     await fc.assert(
       fc.asyncProperty(allKnownCaseArb, async ({ knownIds, records }) => {
         resetState(knownIds);

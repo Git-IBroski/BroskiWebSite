@@ -299,7 +299,7 @@ describe('400 invalid payload path', () => {
     expect(rpcCalls).toHaveLength(0);
   });
 
-  it('returns 400 unknown_level when a level_id is not in the demons allow-list', async () => {
+  it('skips a record whose level_id is not in the demons allow-list (200, nothing stored)', async () => {
     mocks.state.playerRow = { id: 'player-400' };
     mocks.state.knownLevelIds = new Set<string>(); // nothing is known
 
@@ -311,14 +311,10 @@ describe('400 invalid payload path', () => {
 
     await handler(req as never, res as never);
 
-    expect(res.statusCode).toBe(400);
-    expect(res.body).toMatchObject({
-      status: 'error',
-      code: 'unknown_level',
-      field: 'level_id',
-      index: 0,
-    });
-    // Allow-listing happens before any write (Req 10.3): nothing persisted.
+    // Unknown levels are skipped, not rejected: success with zero processed.
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({ status: 'ok', processed: 0 });
+    // Nothing was in the allow-list, so no upsert ran.
     expect(rpcCalls).toHaveLength(0);
   });
 });

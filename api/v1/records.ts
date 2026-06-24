@@ -198,13 +198,17 @@ async function resolvePlayer(tokenHash: string): Promise<AuthOutcome> {
 /* -------------------------------------------------------------------------- */
 
 type LevelCheck =
-  | { kind: 'ok' }
-  | { kind: 'unknown'; index: number; levelId: string }
+  | { kind: 'ok'; known: Set<string> }
   | { kind: 'error' };
 
 /**
- * Verify every record's `level_id` exists in `dtt_demons` BEFORE any upsert, so
- * an unknown level rejects the whole request and persists nothing (Req 10.3).
+ * Fetch the subset of the request's `level_id`s that exist in `dtt_demons`.
+ *
+ * Unknown levels are simply not returned, so the caller stores only the records
+ * whose level is in the allow-list and silently skips the rest (instead of
+ * rejecting the entire request). This keeps a player's valid demon completions
+ * from being dropped just because their save also contains a demon that is not
+ * in the curated list yet.
  */
 async function checkLevelsExist(records: RecordInput[]): Promise<LevelCheck> {
   const uniqueLevelIds = [...new Set(records.map((r) => r.level_id))];
@@ -219,12 +223,7 @@ async function checkLevelsExist(records: RecordInput[]): Promise<LevelCheck> {
   }
 
   const known = new Set((data ?? []).map((row) => (row as { level_id: string }).level_id));
-  for (let index = 0; index < records.length; index += 1) {
-    if (!known.has(records[index].level_id)) {
-      return { kind: 'unknown', index, levelId: records[index].level_id };
-    }
-  }
-  return { kind: 'ok' };
+  return { kind: 'ok', known };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -292,26 +291,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
   const records = validation.records;
 
-  // 6a. All-or-nothing level allow-listing before any write (Req 10.3).
+  // 6a. Resolve which levels are in the allow-list. Unknown levels are skipped
+  //     (not stored) rather than rejecting the whole request, so a player's valid
+  //     demon completions are kept even if their save contains an off-list demon.
   const levelCheck = await checkLevelsExist(records);
   if (levelCheck.kind === 'error') {
     sendError(res, 500, 'persist_failed', 'Record could not be stored');
     return;
   }
-  if (levelCheck.kind === 'unknown') {
-    sendError(res, 400, 'unknown_level', 'level_id not in demons', {
-      field: 'level_id',
-      index: levelCheck.index,
-    });
-    return;
-  }
+  const knownRecords = records.filter((r) => levelCheck.known.has(r.level_id));
 
-  // 6b. Upsert each record via the SECURITY DEFINER RPC, attributing strictly to
-  //     the token's player id (Req 10.1, 7.x). Levels were pre-checked above, so
-  //     a FK violation here is unexpected but still mapped to 400 unknown_level.
+  // 6b. Upsert each KNOWN record via the SECURITY DEFINER RPC, attributing
+  //     strictly to the token's player id (Req 10.1, 7.x).
   const results: RecordResult[] = [];
-  for (let index = 0; index < records.length; index += 1) {
-    const record = records[index];
+  for (let index = 0; index < knownRecords.length; index += 1) {
+    const record = knownRecords[index];
     const { data, error } = await supabaseAdmin.rpc('upsert_record', {
       p_player_id: playerId,
       p_level_id: record.level_id,
