@@ -38,7 +38,6 @@ import BombPartyDebug from './pages/BombPartyDebug'
 import { RouteMeta } from './components/RouteMeta'
 import ManteinancePage from './pages/ManteinancePage'
 import TierlistMaintenance from './pages/TierlistMaintenance'
-import DemonRankPage from './features/demon-tier-tracker/DemonRankPage'
 
 function App() {
   return (
@@ -62,7 +61,7 @@ function App() {
                   {/* Protected routes — require login + accepted terms */}
                   <Route path="/" element={<Home />} />
                   <Route path="/tierlist" element={<TierlistMaintenance />} />
-                  <Route path="/demonrank" element={<DemonRankPage />} />
+                  <Route path="/demonrank" element={<ManteinancePage />} />
                   <Route path="/social" element={<ManteinancePage />} />
                   <Route path="/progetti" element={<Projects />} />
                   <Route path="/wiki" element={<Wiki />} />
