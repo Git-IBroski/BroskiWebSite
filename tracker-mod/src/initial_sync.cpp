@@ -36,6 +36,7 @@
 #include <tracker/serialization.h>
 
 #include "completion_reader.hpp"
+#include "diag.hpp"
 #include "networking.hpp"
 #include "session_state.hpp"
 #include "token_setting.hpp"
@@ -69,8 +70,7 @@ void readAndUpload(std::string token) {
         // Diagnostic: how many raw demon completions were read from the local
         // save before filtering. A value of 0 here means the reader found nothing
         // (e.g. no cached demon levels), which would upload "[]" and store nothing.
-        log::info("Demon Tier Tracker: read {} raw local demon completion(s).",
-                  raw.size());
+        diag("read {} raw local demon completion(s).", raw.size());
 
         // Drop entries missing fields or out of range; keep the valid set (Req 1.3).
         FilterResult filtered = filterCompletions(raw);
@@ -87,10 +87,8 @@ void readAndUpload(std::string token) {
             batches.push_back("[]");
         }
 
-        log::info(
-            "Demon Tier Tracker: Initial Sync uploading {} valid completion(s) "
-            "({} skipped) in {} batch(es).",
-            filtered.valid.size(), filtered.skipped, batches.size());
+        diag("uploading {} valid completion(s) ({} skipped) in {} batch(es).",
+             filtered.valid.size(), filtered.skipped, batches.size());
 
         // POST every batch sequentially. The session flag is set ONLY if every
         // batch returns HTTP 200 within the 30 s timeout (Req 1.6); any non-200,
@@ -112,10 +110,8 @@ void readAndUpload(std::string token) {
                 // apart a 401 (token), a 400 unknown_level (a demon not in the
                 // allow-list), a 413 (too big), or a 503 (auth timeout).
                 const std::string body = response.string().unwrapOr(std::string{});
-                log::warn(
-                    "Demon Tier Tracker: Initial Sync batch {} failed (HTTP {}); "
-                    "response: {}; will retry next launch.",
-                    i, status, body);
+                diag("batch {} FAILED (HTTP {}); response: {}; will retry next launch.",
+                     i, status, body);
                 allSucceeded = false;
                 break;
             }
@@ -135,10 +131,18 @@ void readAndUpload(std::string token) {
                 // Flush any Records queued in a previous session whose POST was
                 // never confirmed, now that uploads are permitted (Req 2.6, 2.7).
                 retryPersistedQueue();
-                log::info("Demon Tier Tracker: Initial Sync complete ({} batch(es)).",
-                          batchCount);
+                diag("Initial Sync complete ({} batch(es)).", batchCount);
+                Notification::create(
+                    "Demon Tier Tracker: sync complete!",
+                    NotificationIcon::Success)
+                    ->show();
             } else {
                 s_session.markFailed();   // leave initial_sync_done unset (Req 1.8)
+                diag("Initial Sync FAILED; will retry next launch.");
+                Notification::create(
+                    "Demon Tier Tracker: sync failed (see DTT button).",
+                    NotificationIcon::Error)
+                    ->show();
             }
         });
     }).detach();
@@ -155,10 +159,17 @@ void runInitialSync() {
 
     const std::optional<std::string> token = getConfiguredToken();  // Req 4.4/4.5
 
+    // Unconditional diagnostics so a single launch reveals exactly which branch
+    // is taken (whether a valid token was read, and whether the sync was already
+    // marked done). These print on the main thread before any dispatch.
+    diag("runInitialSync() entered — token configured: {}, sync already done: {}.",
+         token.has_value(), s_session.isDone());
+
     const SyncAction action = decideSyncAction(token.has_value(), s_session.isDone());
     switch (action) {
         case SyncAction::AlreadyDone:
             s_dispatched = true;
+            diag("Initial Sync already done this session; skipping.");
             return;
 
         case SyncAction::SkipNoToken:
@@ -166,9 +177,12 @@ void runInitialSync() {
             // 4.5). A later launch with a token configured will still sync.
             s_dispatched = true;
             s_session.markSkippedNoToken();
-            log::info(
-                "Demon Tier Tracker: no Secret Player Token configured; Initial "
-                "Sync skipped (not attempted). Set your token in the mod settings.");
+            diag("no Secret Player Token configured; Initial Sync skipped. "
+                 "Set your token in the mod settings.");
+            Notification::create(
+                "Demon Tier Tracker: set your Secret Player Token in mod settings.",
+                NotificationIcon::Warning)
+                ->show();
             return;
 
         case SyncAction::Attempt:
@@ -178,6 +192,7 @@ void runInitialSync() {
     // --- Dispatch the heavy work off the main thread -------------------------
     s_dispatched = true;
     s_session.markInProgress();
+    diag("dispatching background read + upload now.");
     readAndUpload(*token);
 }
 
