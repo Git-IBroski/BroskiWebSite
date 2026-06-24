@@ -7,7 +7,7 @@
     },
     "id": "broski.demon-tier-tracker",
     "name": "Demon Tier Tracker",
-    "version": "v0.2.1",
+    "version": "v0.2.2",
     "developer": "Broski",
     "description": "Automatically reports your Geometry Dash demon completions to the Broski community tier list.",
     "settings": {

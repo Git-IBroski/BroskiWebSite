@@ -107,8 +107,8 @@ class $modify(TrackerMenuLayer, MenuLayer) {
 
 // Runs once when the mod is loaded.
 $execute {
-    log::info("Demon Tier Tracker mod loaded (v0.2.1).");
-    tracker::diagAdd("mod loaded (v0.2.1).");
+    log::info("Demon Tier Tracker mod loaded (v0.2.2).");
+    tracker::diagAdd("mod loaded (v0.2.2).");
 
     // Enforce token validation on every settings save (Req 4.3). Persistence of
     // the declared `player-token` setting is handled automatically by Geode.
