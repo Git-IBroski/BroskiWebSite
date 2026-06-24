@@ -1374,7 +1374,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [language, setLanguageState] = useState<Language>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('broski-language') as Language;
-      return saved || 'it';
+      if (saved === 'it' || saved === 'en') return saved;
+      // Nessuna preferenza salvata: usa la lingua del browser.
+      // Italiano se il browser è in italiano, altrimenti inglese.
+      const browserLang = (navigator.language || '').toLowerCase();
+      return browserLang.startsWith('it') ? 'it' : 'en';
     }
     return 'it';
   });
