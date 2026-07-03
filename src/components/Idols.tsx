@@ -20,6 +20,28 @@ interface IdolData {
 }
 
 const idolsData: IdolData[] = [
+  {
+    name: 'un1verso',
+    channelId: 'UCU7QmMl0-MvJZBBq8MhkAiQ',
+    channelLink: 'https://www.youtube.com/@un1versoMC',
+    colorClass: 'bg-primary-container',
+    textColorClass: 'text-primary',
+    btnTextColorClass: 'text-white',
+    description: 'meow.',
+    defaultImage: 'https://img.youtube.com/vi/Mk4jo7aCqIw/maxresdefault.jpg',
+    fallbackVideoUrl: 'https://www.youtube.com/watch?v=Mk4jo7aCqIw'
+  },
+  {
+    name: 'Rossinho',
+    channelId: 'UCH8HPTvCZy0O2UpkWXRB6EA',
+    channelLink: 'https://www.youtube.com/@rossinhoofficial',
+    colorClass: 'bg-primary-container',
+    textColorClass: 'text-primary',
+    btnTextColorClass: 'text-white',
+    description: 'meow.',
+    defaultImage: 'https://img.youtube.com/vi/gfisuNmDrRc/maxresdefault.jpg',
+    fallbackVideoUrl: 'https://www.youtube.com/watch?v=gfisuNmDrRc'
+  }
 ];
 
 // Estrae l'ID video da un URL YouTube

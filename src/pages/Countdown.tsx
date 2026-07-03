@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import PageAnimator from '../components/PageAnimator';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../config/supabaseClient';
+import Idols from '../components/Idols';
 
 const DEFAULT_TARGET = '';
 
@@ -124,9 +125,12 @@ const Countdown: React.FC = () => {
         )}
 
         {isFinished && (
+          <div>
           <p className="rounded-3xl border-[3px] border-black bg-primary-container px-8 py-4 font-headline-md text-[24px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
             {t('countdown.finished')}
           </p>
+          <Idols></Idols>
+          </div>
         )}
 
         {/* Mute button */}

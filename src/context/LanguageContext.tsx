@@ -418,7 +418,7 @@ const translations = {
     'countdown.minutes': 'MINUTI',
     'countdown.seconds': 'SECONDI',
     'countdown.launched': 'LANCIATO!',
-    'countdown.finished': 'La stagione è iniziata! Ci vediamo nel server.',
+    'countdown.finished': 'La stagione è iniziata! Ci vediamo nelle LIVE!',
     'countdown.mute': 'MUTA',
     'countdown.unmute': 'ATTIVA SUONO',
 
