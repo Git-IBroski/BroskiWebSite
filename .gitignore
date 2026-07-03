@@ -27,3 +27,9 @@ dist-ssr
 *.sw?
 .vercel
 .env*
+
+# Demon Tier Tracker — local-only secrets and seed artifacts
+dtt-player-tokens.local.txt
+.env.seed
+scripts/_dtt_seed_batches/
+scripts/_dtt_*.cjs

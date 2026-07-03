@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import TransitionLink from './TransitionLink';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,7 @@ const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasNotification, setHasNotification] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,6 +22,18 @@ const Header: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close the profile dropdown when clicking anywhere outside of it
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   // Check for notifications
   useEffect(() => {
@@ -72,7 +85,7 @@ const Header: React.FC = () => {
       <TransitionLink to="/" className="border-4 border-black px-4 py-1 bg-red-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 hover:translate-y-1 hover:translate-x-1 transition-all active:translate-y-2 active:translate-x-2 cursor-pointer flex items-center justify-center rounded-2xl">
         <img src="/logo/3d36j5v.svg" alt="Broski Logo" className="h-8 w-auto drop-shadow-md" />
       </TransitionLink>
-      <div className="hidden md:flex gap-8 items-center font-headline-md uppercase tracking-tighter">
+      <div className="hidden md:flex gap-8 items-center font-headline-md uppercase tracking-tighter absolute left-1/2 -translate-x-1/2">
         <TransitionLink 
           to="/" 
           className={`${location.pathname === '/' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
@@ -120,8 +133,12 @@ const Header: React.FC = () => {
             <span className="material-symbols-outlined text-[22px] text-white">{mobileMenuOpen ? 'close' : 'menu'}</span>
           </button>
 
-          {/* Language Toggle - visible to all */}
-          <div className="hidden sm:flex items-center gap-1 rounded-lg border-2 border-black bg-black p-1">
+          {/* Language Toggle - slides out to the right and collapses when the navbar detaches; matches the navbar animation */}
+          <div className={`hidden sm:flex items-center gap-1 rounded-lg border-2 bg-black overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+            isScrolled
+              ? 'max-w-0 -ml-2 translate-x-6 opacity-0 border-transparent p-0'
+              : 'max-w-[120px] ml-0 translate-x-0 opacity-100 border-black p-1'
+          }`}>
             <button
               onClick={() => setLanguage('it')}
               className={`rounded px-2 py-1 font-label-caps text-[10px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
@@ -137,36 +154,63 @@ const Header: React.FC = () => {
           </div>
 
           {/* Profile button */}
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+          <div className="relative" ref={menuRef}>
+            <div
+              className={`relative flex items-center gap-2 rounded-2xl border-[3px] border-black bg-surface-container px-2 py-1 transition-all duration-300 ease-out delay-300 ${
+                menuOpen
+                  ? 'rounded-b-none border-b-0 shadow-[4px_0px_0px_0px_rgba(0,0,0,1)]'
+                  : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+              }`}
             >
-              <img
-                src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/profile.png'}
-                alt="Profilo"
-                className="h-8 w-8 rounded-xl border-2 border-black"
-              />
-              <span className="material-symbols-outlined text-white hidden sm:block">expand_more</span>
-              {hasNotification && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
-              )}
-            </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-2 flex w-44 flex-col gap-2 rounded-2xl border-[3px] border-black bg-surface-container p-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+              {/* Minecraft IGN that slides out to the left when opening; links to /profilo */}
               <TransitionLink
                 to="/profilo"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-2 rounded-xl border-2 border-black bg-surface-container-high px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+                tabIndex={menuOpen ? 0 : -1}
+                className={`overflow-hidden whitespace-nowrap rounded-lg font-label-caps text-[12px] text-white transition-all duration-300 ease-out hover:text-tertiary ${
+                  menuOpen ? 'w-[120px] px-1 opacity-100 ml-1 delay-0' : 'pointer-events-none w-0 px-0 opacity-0 ml-0 delay-300'
+                }`}
+              >
+                {profile.minecraft_username}
+              </TransitionLink>
+              {/* Avatar + chevron toggles the dropdown */}
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center gap-2 rounded-xl transition-all active:translate-x-0.5 active:translate-y-0.5"
               >
                 <img
                   src={profile.ign_verified ? `https://mc-heads.net/avatar/${profile.minecraft_username}/64` : '/profilepng/profile.png'}
-                  alt=""
-                  className="h-6 w-6 rounded-lg border border-black"
+                  alt="Profilo"
+                  className="h-8 w-8 rounded-xl border-2 border-black"
                 />
-                <span className="truncate font-label-caps text-[12px] text-white">{profile.minecraft_username}</span>
-              </TransitionLink>
-
+                <span className={`material-symbols-outlined text-white hidden sm:block transition-transform duration-300 ${menuOpen ? 'rotate-180' : ''}`}>expand_more</span>
+              </button>
+              {hasNotification && (
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
+              )}
+            </div>
+            <div
+              className={`absolute left-0 right-0 top-full flex flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 px-3 origin-top transition-all duration-300 ease-out ${
+                menuOpen ? `${isScrolled ? 'max-h-[320px]' : 'max-h-[260px]'} py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300` : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
+              }`}
+            >
+              {/* Language Toggle - moved inside the dropdown when navbar is detached from the top */}
+              {isScrolled && (
+                <div className="flex items-center justify-center gap-1 rounded-xl border-[3px] border-black bg-black p-1">
+                  <button
+                    onClick={() => setLanguage('it')}
+                    className={`flex-1 rounded px-2 py-1.5 font-label-caps text-[12px] transition-all ${language === 'it' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+                  >
+                    IT
+                  </button>
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex-1 rounded px-2 py-1.5 font-label-caps text-[12px] transition-all ${language === 'en' ? 'bg-tertiary text-black' : 'text-white hover:bg-white/10'}`}
+                  >
+                    EN
+                  </button>
+                </div>
+              )}
               {profile.role === 'admin' && (
                 <TransitionLink
                   to="/admin"
@@ -194,6 +238,14 @@ const Header: React.FC = () => {
                 </TransitionLink>
               )}
               <TransitionLink
+                to="/demonrank"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-primary-container px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+              >
+                <span className="material-symbols-outlined text-[18px]">leaderboard</span>
+                DemonRank
+              </TransitionLink>
+              <TransitionLink
                 to="/bomb-party"
                 onClick={() => setMenuOpen(false)}
                 className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-orange-600 px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -209,7 +261,6 @@ const Header: React.FC = () => {
                 {t('nav.logout')}
               </button>
             </div>
-          )}
           </div>
         </div>
       ) : (

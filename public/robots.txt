@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Aree private / tecniche: non utili nei risultati di ricerca
+Disallow: /admin
+Disallow: /admin/
+Disallow: /signin
+Disallow: /signup
+Disallow: /verify-email
+Disallow: /store
+Disallow: /mie-idee
+Disallow: /profilo
+Disallow: /bomb-party
+Disallow: /bomb-party-debug
+Disallow: /mods/upload
+Disallow: /mods/my
+Disallow: /mods/saved
+Disallow: /mods/followed
+
+Sitemap: https://www.ibroski.net/sitemap.xml

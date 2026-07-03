@@ -61,6 +61,7 @@ function App() {
                   {/* Protected routes — require login + accepted terms */}
                   <Route path="/" element={<Home />} />
                   <Route path="/tierlist" element={<TierlistMaintenance />} />
+                  <Route path="/demonrank" element={<ManteinancePage />} />
                   <Route path="/social" element={<ManteinancePage />} />
                   <Route path="/progetti" element={<Projects />} />
                   <Route path="/wiki" element={<Wiki />} />
