@@ -22,8 +22,8 @@ const UnstableSmp: React.FC = () => {
           </h2>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-2 rounded-2xl border-[2px] border-black bg-black px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-              <div className="h-4 w-4 animate-pulse rounded-full border-[2px] border-black bg-red-500"></div>
-              <span className="font-label-caps text-label-caps text-white">0 - OFFLINE</span>
+              <div className="h-4 w-4 animate-pulse rounded-full border-[2px] border-black bg-green-500"></div>
+              <span className="font-label-caps text-label-caps text-white">S1 - ONLINE</span>
             </div>
             
           </div>
@@ -35,7 +35,7 @@ const UnstableSmp: React.FC = () => {
         <div className="flex w-full flex-col gap-4 md:items-end">
           <div className="w-full rounded-[2rem] border-[4px] border-black bg-surface-container-low p-4 shadow-[7px_7px_0px_0px_rgba(0,0,0,1)] md:max-w-md">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="font-headline-md text-3xl text-white">COMING SOON</span>
+              <span className="font-headline-md text-3xl text-white">END FIGHT SOON!</span>
               <span className="material-symbols-outlined rounded-2xl border-2 border-black bg-secondary-container p-2 text-2xl text-white">swords</span>
             </div>
             <p className="font-label-caps text-[11px] text-on-surface-variant">{t('smp.countdown_info')}</p>

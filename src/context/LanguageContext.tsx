@@ -342,7 +342,7 @@ const translations = {
     'wiki.smp.rules.collab': 'Collabora con la community',
     'wiki.smp.rules.creator': 'Diventa un creator per accedere',
     'wiki.smp.status.title': 'Stato Attuale',
-    'wiki.smp.status.desc': 'Season 0 - Inizierà fra veramente poco... Guarda il countdown!',
+    'wiki.smp.status.desc': 'Season 1 - LA PRIMA SMP D\'ITALIA!',
     'wiki.tierlist.intro': 'è il sistema di ranking competitivo della nostra community. I nostri giocatori vengono classificati in base alle loro abilità di PvP in 9 categorie diverse.',
     'wiki.tierlist.ht.desc': 'Il tier maggiore, diviso in 5 livelli:',
     'wiki.tierlist.lt.desc': 'Il tier minore, diviso in 5 livelli:',
@@ -407,9 +407,9 @@ const translations = {
     // UnstableSmp comp
     'smp.badge': 'SMP PRIVATA??',
     'smp.description': 'La Rivoluzione. No spoiler!',
-    'smp.countdown_info': 'Iscriviti ai nostri canali Youtube per essere il primo a vederla!',
-    'smp.goto_countdown': 'COUNTDOWN',
-    'smp.of_control': 'Conto alla rovescia ufficiale della SMP!',
+    'smp.countdown_info': 'Iscriviti ai nostri canali Youtube per essere il primo a vedere ogni episodio!',
+    'smp.goto_countdown': 'I nostri canali',
+    'smp.of_control': 'Scopri i nostri ultimi video!',
 
     // Countdown
     'countdown.title': 'COUNTDOWN',
