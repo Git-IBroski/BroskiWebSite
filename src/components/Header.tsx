@@ -5,6 +5,57 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../config/supabaseClient';
 
+// Canonical origins for cross-subdomain navigation in production.
+const MAIN_ORIGIN = 'https://www.ibroski.net';
+const SMP_ORIGIN = 'https://smp.ibroski.net';
+
+function hostInfo() {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  return {
+    onSmp: host.startsWith('smp.'),
+    isIbroski: host === 'ibroski.net' || host.endsWith('.ibroski.net'),
+  };
+}
+
+// A nav link that stays a client-side TransitionLink within the same origin, but
+// becomes a real cross-origin <a> when jumping between the main site and the SMP
+// subdomain (otherwise the SPA router traps you on the wrong origin).
+const HeaderLink: React.FC<{
+  to: string;
+  kind?: 'main' | 'smp';
+  onClick?: () => void;
+  className?: string;
+  tabIndex?: number;
+  children: React.ReactNode;
+}> = ({ to, kind = 'main', onClick, className, tabIndex, children }) => {
+  const { onSmp, isIbroski } = hostInfo();
+  let href: string | null = null;
+  let routeTo = to;
+
+  if (kind === 'smp') {
+    const smpPath = to.replace(/^\/smp/, '') || '/';
+    if (onSmp) routeTo = smpPath;                        // already on the subdomain
+    else if (isIbroski) href = SMP_ORIGIN + smpPath;     // main site -> subdomain (full load)
+    else routeTo = to;                                   // dev / preview: use the /smp path
+  } else {
+    if (onSmp && isIbroski) href = MAIN_ORIGIN + to;     // subdomain -> main site (full load)
+    else routeTo = to;                                   // same origin
+  }
+
+  if (href) {
+    return (
+      <a href={href} onClick={onClick} className={className} tabIndex={tabIndex}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <TransitionLink to={routeTo} onClick={onClick} className={className} tabIndex={tabIndex}>
+      {children}
+    </TransitionLink>
+  );
+};
+
 const Header: React.FC = () => {
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
@@ -108,42 +159,42 @@ const Header: React.FC = () => {
         )}
       </TransitionLink>
       <div className="hidden md:flex gap-8 items-center font-headline-md uppercase tracking-tighter absolute left-1/2 -translate-x-1/2">
-        <TransitionLink 
-          to="/" 
-          className={`${location.pathname === '/' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
+        <HeaderLink
+          to="/"
+          className={`${!isSmp && location.pathname === '/' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
         >
           {t('nav.home')}
-        </TransitionLink>
-        <TransitionLink 
-          to="/tierlist" 
+        </HeaderLink>
+        <HeaderLink
+          to="/tierlist"
           className={`${location.pathname === '/tierlist' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
         >
           {t('nav.tierlist')}
-        </TransitionLink>
-        <TransitionLink 
-          to="/social" 
+        </HeaderLink>
+        <HeaderLink
+          to="/social"
           className={`${location.pathname === '/social' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
         >
           {t('nav.social')}
-        </TransitionLink>
-        <TransitionLink 
-          to="/progetti" 
+        </HeaderLink>
+        <HeaderLink
+          to="/progetti"
           className={`${location.pathname === '/progetti' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
         >
           {t('nav.projects')}
-        </TransitionLink>
-        <TransitionLink 
-          to="/wiki" 
+        </HeaderLink>
+        <HeaderLink
+          to="/wiki"
           className={`${location.pathname === '/wiki' ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
         >
           {t('nav.wiki')}
-        </TransitionLink>
-        <TransitionLink 
-          to="/mods" 
+        </HeaderLink>
+        <HeaderLink
+          to="/mods"
           className={`${location.pathname.startsWith('/mods') ? 'text-yellow-400 underline decoration-4 underline-offset-4' : 'text-white'} hover:bg-red-500 hover:translate-y-1 hover:translate-x-1 transition-all rounded-xl px-2`}
         >
           Mods
-        </TransitionLink>
+        </HeaderLink>
       </div>
       {user && profile?.minecraft_username ? (
         <div className="flex items-center gap-2">
@@ -185,7 +236,7 @@ const Header: React.FC = () => {
               }`}
             >
               {/* Minecraft IGN that slides out to the left when opening; links to /profilo */}
-              <TransitionLink
+              <HeaderLink
                 to="/profilo"
                 onClick={() => setMenuOpen(false)}
                 tabIndex={menuOpen ? 0 : -1}
@@ -194,7 +245,7 @@ const Header: React.FC = () => {
                 }`}
               >
                 {profile.minecraft_username}
-              </TransitionLink>
+              </HeaderLink>
               {/* Avatar + chevron toggles the dropdown */}
               <button
                 onClick={() => setMenuOpen((v) => !v)}
@@ -234,7 +285,7 @@ const Header: React.FC = () => {
                 </div>
               )}
               {profile.role === 'admin' && (
-                <TransitionLink
+                <HeaderLink
                   to="/admin"
                   onClick={() => setMenuOpen(false)}
                   className="relative flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-tertiary px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -244,10 +295,10 @@ const Header: React.FC = () => {
                   {hasNotification && (
                     <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
                   )}
-                </TransitionLink>
+                </HeaderLink>
               )}
               {profile.role !== 'admin' && (
-                <TransitionLink
+                <HeaderLink
                   to="/mie-idee"
                   onClick={() => setMenuOpen(false)}
                   className="relative flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-surface-container-high px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -257,32 +308,33 @@ const Header: React.FC = () => {
                   {hasNotification && (
                     <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-black bg-red-500" />
                   )}
-                </TransitionLink>
+                </HeaderLink>
               )}
-              <TransitionLink
+              <HeaderLink
                 to="/smp"
+                kind="smp"
                 onClick={() => setMenuOpen(false)}
                 className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-secondary px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
               >
                 <span className="material-symbols-outlined text-[18px]">dns</span>
                 BroskiSMP
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/demonrank"
                 onClick={() => setMenuOpen(false)}
                 className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-primary-container px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
               >
                 <span className="material-symbols-outlined text-[18px]">leaderboard</span>
                 DemonRank
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/bomb-party"
                 onClick={() => setMenuOpen(false)}
                 className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-orange-600 px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
               >
                 <span className="material-symbols-outlined text-[18px]">bomb</span>
                 Bomb Party
-              </TransitionLink>
+              </HeaderLink>
               <button
                 onClick={() => { signOut(); setMenuOpen(false); }}
                 className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-error-container px-3 py-2 font-label-caps text-[12px] text-on-error-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -331,17 +383,17 @@ const Header: React.FC = () => {
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 mt-2 mx-4 rounded-2xl border-[4px] border-black bg-blue-900 p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] pointer-events-auto">
             <div className="flex flex-col gap-2">
-              <TransitionLink
+              <HeaderLink
                 to="/"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
-                  location.pathname === '/' ? 'bg-red-500 text-yellow-400' : 'text-white hover:bg-red-500/50'
+                  !isSmp && location.pathname === '/' ? 'bg-red-500 text-yellow-400' : 'text-white hover:bg-red-500/50'
                 }`}
               >
                 <span className="material-symbols-outlined text-[20px]">home</span>
                 {t('nav.home')}
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/tierlist"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
@@ -350,8 +402,8 @@ const Header: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-[20px]">emoji_events</span>
                 {t('nav.tierlist')}
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/social"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
@@ -360,8 +412,8 @@ const Header: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-[20px]">group</span>
                 {t('nav.social')}
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/progetti"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
@@ -370,8 +422,8 @@ const Header: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-[20px]">science</span>
                 {t('nav.projects')}
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/wiki"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
@@ -380,8 +432,8 @@ const Header: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-[20px]">menu_book</span>
                 {t('nav.wiki')}
-              </TransitionLink>
-              <TransitionLink
+              </HeaderLink>
+              <HeaderLink
                 to="/mods"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
@@ -390,7 +442,18 @@ const Header: React.FC = () => {
               >
                 <span className="material-symbols-outlined text-[20px]">extension</span>
                 Mods
-              </TransitionLink>
+              </HeaderLink>
+              <HeaderLink
+                to="/smp"
+                kind="smp"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 font-headline-md text-[16px] uppercase tracking-tighter transition-all ${
+                  isSmp ? 'bg-red-500 text-yellow-400' : 'text-white hover:bg-red-500/50'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[20px]">dns</span>
+                BroskiSMP
+              </HeaderLink>
             </div>
           </div>
         )}
