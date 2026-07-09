@@ -63,15 +63,15 @@ const UI = {
   },
 };
 
-const StatCard = ({ icon, label, value, accent }: { icon: string; label: string; value: string; accent: string }) => (
-  <div className="rounded-3xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
-    <div className="flex items-center justify-between gap-3">
-      <span className="font-headline-md text-2xl text-white">{value}</span>
-      <span className={`material-symbols-outlined rounded-2xl border-2 border-black p-2 text-2xl text-white ${accent}`}>{icon}</span>
-    </div>
-    <p className="mt-2 font-label-caps text-[11px] text-on-surface-variant">{label}</p>
-  </div>
-);
+// const StatCard = ({ icon, label, value, accent }: { icon: string; label: string; value: string; accent: string }) => (
+//  <div className="rounded-3xl border-[3px] border-black bg-surface-container-high p-4 shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+//    <div className="flex items-center justify-between gap-3">
+//      <span className="font-headline-md text-2xl text-white">{value}</span>
+//      <span className={`material-symbols-outlined rounded-2xl border-2 border-black p-2 text-2xl text-white ${accent}`}>{icon}</span>
+//    </div>
+//    <p className="mt-2 font-label-caps text-[11px] text-on-surface-variant">{label}</p>
+//  </div>
+//);
 
 const SmpHome: React.FC<SmpHomeProps> = ({ base }) => {
   const { language } = useLanguage();
