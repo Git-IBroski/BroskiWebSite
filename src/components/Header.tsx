@@ -154,7 +154,7 @@ const Header: React.FC = () => {
               logoOpen ? 'ml-2 max-w-[80px] pr-1 opacity-100' : 'ml-0 max-w-0 opacity-0'
             }`}
           >
-            SMP
+            <img src="./smp.svg" alt="skibidi boppi" />
           </span>
         )}
       </TransitionLink>
