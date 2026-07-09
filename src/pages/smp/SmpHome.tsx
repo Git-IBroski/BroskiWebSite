@@ -113,26 +113,25 @@ const SmpHome: React.FC<SmpHomeProps> = ({ base }) => {
           <div className="absolute -right-14 -top-16 h-60 w-60 rounded-full border-4 border-black bg-primary-container opacity-90" />
           <div className="absolute bottom-8 right-16 hidden h-28 w-28 rotate-45 rounded-3xl border-4 border-black bg-tertiary opacity-80 md:block" />
 
-          <div className="relative z-10 grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.15fr_0.85fr] lg:p-10">
-            <div className="flex flex-col items-start gap-5">
+          <div className="relative z-10  gap-8 p-6 sm:p-8 lg:grid-cols-[1.15fr_0.85fr] lg:p-10">
+            <div className="flex flex-col items-center gap-5">
               <div className="inline-flex -rotate-2 items-center gap-2 rounded-2xl border-[3px] border-black bg-secondary-container px-3 py-2 font-label-caps text-label-caps text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <span className="material-symbols-outlined text-[18px]">dns</span>
                 {ui.badge}
               </div>
 
-              <div>
+              <div className="flex flex-col items-center gap-4">
                 <h1 className="font-headline-lg text-[52px] uppercase leading-[0.9] tracking-tighter text-white drop-shadow-[5px_5px_0px_rgba(0,0,0,1)] sm:text-[76px] lg:text-[92px]">
-                  BROSKI
-                  <span className="block text-secondary-container">SMP</span>
+                  <img src="./broskismphorizontal.webp" alt="Broski SMP" className='max-h-[300px] w-auto' />
                 </h1>
                 {heroSubtitle && (
-                  <p className="mt-4 max-w-2xl rounded-3xl border-[3px] border-black bg-surface-container-high p-4 font-body-lg font-bold text-on-surface-variant shadow-[5px_5px_0px_0px_rgba(0,0,0,1)]">
+                  <p className="mt-4 max-w-2xl rounded-3xl border-[3px] border-black bg-surface-container-high p-4 font-body-lg font-bold text-on-surface-variant shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] text-center">
                     {heroSubtitle}
                   </p>
                 )}
               </div>
 
-              <div className="flex w-full flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 items-center">
                 {open ? (
                   <TransitionLink
                     to={applyHref}
@@ -159,12 +158,6 @@ const SmpHome: React.FC<SmpHomeProps> = ({ base }) => {
                   </a>
                 )}
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              <StatCard icon="swords" label={ui.stat_mode} value={ui.stat_mode_v} accent="bg-secondary-container" />
-              <StatCard icon="stadia_controller" label={ui.stat_edition} value="Java" accent="bg-primary-container" />
-              <StatCard icon="groups" label={ui.stat_players} value={ui.stat_players_v} accent="bg-tertiary !text-black" />
             </div>
           </div>
         </header>
