@@ -78,6 +78,26 @@ const routeMeta: Record<string, Record<Language, MetaContent>> = {
   },
 }
 
+// Meta for the BroskiSMP subdomain / /smp paths.
+const smpMeta: Record<Language, MetaContent> = {
+  it: {
+    title: 'BroskiSMP',
+    description: 'Il server survival multiplayer della Broski Community. Scopri di più e candidati per entrare.',
+    url: 'https://smp.ibroski.net',
+    image: 'https://www.ibroski.net/og-cover.png',
+  },
+  en: {
+    title: 'BroskiSMP',
+    description: 'The survival multiplayer server of the Broski Community. Learn more and apply to join.',
+    url: 'https://smp.ibroski.net',
+    image: 'https://www.ibroski.net/og-cover.png',
+  },
+}
+
+const isSmpContext = (pathname: string) =>
+  (typeof window !== 'undefined' && window.location.hostname.startsWith('smp.')) ||
+  pathname.startsWith('/smp')
+
 const setMeta = (attr: 'name' | 'property', key: string, value: string) => {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`)
   if (!el) {
@@ -93,7 +113,9 @@ export function RouteMeta() {
   const { language } = useLanguage()
 
   useEffect(() => {
-    const entry = routeMeta[location.pathname] ?? routeMeta['/']
+    const entry = isSmpContext(location.pathname)
+      ? smpMeta
+      : (routeMeta[location.pathname] ?? routeMeta['/'])
     const meta = entry[language] ?? entry.it
     document.title = meta.title
     setMeta('name', 'description', meta.description)

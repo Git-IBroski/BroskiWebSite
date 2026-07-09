@@ -5,6 +5,7 @@ import { supabase } from '../config/supabaseClient';
 import PageAnimator from '../components/PageAnimator';
 import TransitionLink from '../components/TransitionLink';
 import { useLanguage } from '../context/LanguageContext';
+import SmpAdminSection from './smp/SmpAdminSection';
 
 interface NewsItem {
   id: string;
@@ -132,7 +133,7 @@ const calculatePoints = (ranks: Record<string, string>): number => {
   return total;
 };
 
-type AdminTab = 'news' | 'tierlist' | 'countdown' | 'contacts' | 'mods' | 'ideas' | 'users';
+type AdminTab = 'news' | 'tierlist' | 'countdown' | 'contacts' | 'mods' | 'ideas' | 'users' | 'smp';
 
 interface Idea {
   id: string;
@@ -618,6 +619,20 @@ const AdminPanel: React.FC = () => {
             >
               <span className="material-symbols-outlined mr-2 inline-block">extension</span>
               MODS
+            </button>
+          )}
+          {/* SMP: owner, admin */}
+          {(['owner', 'admin'] as const).includes(profile?.admin_rank as any) && (
+            <button
+              onClick={() => setActiveTab('smp')}
+              className={`rounded-2xl border-[3px] border-black px-6 py-3 font-headline-md text-[16px] shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                activeTab === 'smp'
+                  ? 'bg-primary-container text-white'
+                  : 'bg-surface-container text-on-surface hover:-translate-y-1'
+              }`}
+            >
+              <span className="material-symbols-outlined mr-2 inline-block">public</span>
+              SMP
             </button>
           )}
           {/* IDEE: owner, admin, mod */}
@@ -1627,6 +1642,9 @@ const AdminPanel: React.FC = () => {
             })()}
           </div>
         )}
+
+        {/* SMP TAB */}
+        {activeTab === 'smp' && <SmpAdminSection />}
       </div>
     </PageAnimator>
   );

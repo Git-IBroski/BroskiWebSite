@@ -15,6 +15,19 @@ const Header: React.FC = () => {
   const [hasNotification, setHasNotification] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // On the BroskiSMP subdomain (or the /smp fallback path) the logo box plays a
+  // one-time animation: it extends to the right to reveal the word "SMP".
+  const isSmp =
+    (typeof window !== 'undefined' && window.location.hostname.startsWith('smp.')) ||
+    location.pathname.startsWith('/smp');
+  const [logoOpen, setLogoOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isSmp) return;
+    const t = setTimeout(() => setLogoOpen(true), 450);
+    return () => clearTimeout(t);
+  }, [isSmp]);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -82,8 +95,17 @@ const Header: React.FC = () => {
               : 'translate-y-0 w-full max-w-full rounded-none border-4 border-transparent border-b-black shadow-none'
           }`}
         >
-      <TransitionLink to="/" className="border-4 border-black px-4 py-1 bg-red-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 hover:translate-y-1 hover:translate-x-1 transition-all active:translate-y-2 active:translate-x-2 cursor-pointer flex items-center justify-center rounded-2xl">
+      <TransitionLink to="/" className="border-4 border-black px-4 py-1 bg-red-500 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-red-400 hover:translate-y-1 hover:translate-x-1 transition-all active:translate-y-2 active:translate-x-2 cursor-pointer flex items-center justify-center rounded-2xl overflow-hidden">
         <img src="/logo/3d36j5v.svg" alt="Broski Logo" className="h-8 w-auto drop-shadow-md" />
+        {isSmp && (
+          <span
+            className={`flex items-center overflow-hidden whitespace-nowrap font-headline-md uppercase leading-none tracking-tighter text-white transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+              logoOpen ? 'ml-2 max-w-[80px] pr-1 opacity-100' : 'ml-0 max-w-0 opacity-0'
+            }`}
+          >
+            SMP
+          </span>
+        )}
       </TransitionLink>
       <div className="hidden md:flex gap-8 items-center font-headline-md uppercase tracking-tighter absolute left-1/2 -translate-x-1/2">
         <TransitionLink 
@@ -191,7 +213,7 @@ const Header: React.FC = () => {
             </div>
             <div
               className={`absolute left-0 right-0 top-full flex flex-col gap-2 overflow-hidden rounded-2xl rounded-t-none border-[3px] border-t-0 px-3 origin-top transition-all duration-300 ease-out ${
-                menuOpen ? `${isScrolled ? 'max-h-[320px]' : 'max-h-[260px]'} py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300` : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
+                menuOpen ? `${isScrolled ? 'max-h-[380px]' : 'max-h-[320px]'} py-3 border-black bg-surface-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1),4px_0px_0px_0px_rgba(0,0,0,1)] delay-300` : 'pointer-events-none max-h-0 py-0 border-transparent bg-transparent shadow-none delay-0'
               }`}
             >
               {/* Language Toggle - moved inside the dropdown when navbar is detached from the top */}
@@ -237,6 +259,14 @@ const Header: React.FC = () => {
                   )}
                 </TransitionLink>
               )}
+              <TransitionLink
+                to="/smp"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center gap-2 rounded-xl border-[3px] border-black bg-secondary px-3 py-2 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none"
+              >
+                <span className="material-symbols-outlined text-[18px]">dns</span>
+                BroskiSMP
+              </TransitionLink>
               <TransitionLink
                 to="/demonrank"
                 onClick={() => setMenuOpen(false)}
