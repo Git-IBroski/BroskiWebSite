@@ -41,6 +41,7 @@ import TierlistMaintenance from './pages/TierlistMaintenance'
 import SmpHome from './pages/smp/SmpHome'
 import SmpApplication from './pages/smp/SmpApplication'
 import DiscordInviteRedirect from './pages/DiscordInviteRedirect'
+import CookieConsent from './components/CookieConsent'
 import { isDiscordHost, isSmpHost } from './utils/hostRouting'
 
 // The BroskiSMP experience is served on the `smp.` subdomain at the root path
@@ -80,6 +81,7 @@ function App() {
               <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
                 <SmpApp />
               </div>
+              <CookieConsent />
             </SmoothScroll>
           </TransitionProvider>
         </AuthProvider>
@@ -160,6 +162,7 @@ function App() {
               </div>
               <Footer />
             </div>
+            <CookieConsent />
           </SmoothScroll>
         </TransitionProvider>
       </AuthProvider>
