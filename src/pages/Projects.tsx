@@ -95,16 +95,16 @@ const Projects: React.FC = () => {
             <div className="absolute -left-14 top-16 h-40 w-40 rotate-12 rounded-[2rem] border-4 border-black bg-primary-container opacity-80 transition-transform duration-700 group-hover:rotate-[24deg]"></div>
 
             <div className="absolute right-4 top-4 z-10 rotate-3 rounded-2xl border-2 border-black bg-secondary-container px-3 py-2 font-label-caps text-xs text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-              {t('projects.controlsmp.featured')}
+              Broski SMP
             </div>
 
             <div className="relative z-10 flex min-h-[460px] flex-col justify-end p-margin">
               <div className="mb-4 flex flex-wrap gap-2">
-                <ProjectTag className="bg-black text-white">SEASON 0</ProjectTag>
+                <ProjectTag className="bg-black text-white">SEASON 1 Coming soon</ProjectTag>
                 <ProjectTag className="bg-surface-bright text-white">PRIVATE!</ProjectTag>
                 <ProjectTag className="bg-tertiary text-black">MINECRAFT 1.21</ProjectTag>
               </div>
-              <h2 className="mb-2 font-headline-lg text-5xl text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-6xl">Might SMP</h2>
+              <h2 className="mb-2 font-headline-lg text-5xl text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] sm:text-6xl">Broski SMP</h2>
               
               <div className="mb-4 flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border-2 border-black bg-red-500 shadow-[0_0_12px_rgba(255,0,0,1)]"></div>
