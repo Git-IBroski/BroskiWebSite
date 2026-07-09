@@ -40,11 +40,14 @@ import ManteinancePage from './pages/ManteinancePage'
 import TierlistMaintenance from './pages/TierlistMaintenance'
 import SmpHome from './pages/smp/SmpHome'
 import SmpApplication from './pages/smp/SmpApplication'
+import DiscordInviteRedirect from './pages/DiscordInviteRedirect'
+import { isDiscordHost, isSmpHost } from './utils/hostRouting'
 
 // The BroskiSMP experience is served on the `smp.` subdomain at the root path
 // (production: smp.ibroski.net), and mirrored under `/smp` on the main domain so
 // it stays testable on the dev server / preview without DNS.
-const isSmpHost = typeof window !== 'undefined' && window.location.hostname.startsWith('smp.')
+const isSmpHostValue = typeof window !== 'undefined' && isSmpHost(window.location.hostname)
+const isDiscordHostValue = typeof window !== 'undefined' && isDiscordHost(window.location.hostname)
 
 function SmpApp() {
   return (
@@ -66,7 +69,7 @@ function SmpApp() {
 }
 
 function App() {
-  if (isSmpHost) {
+  if (isSmpHostValue) {
     return (
       <Router>
         <AuthProvider>
@@ -76,6 +79,24 @@ function App() {
               <ScrollToTop />
               <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
                 <SmpApp />
+              </div>
+            </SmoothScroll>
+          </TransitionProvider>
+        </AuthProvider>
+      </Router>
+    )
+  }
+
+  if (isDiscordHostValue) {
+    return (
+      <Router>
+        <AuthProvider>
+          <TransitionProvider>
+            <SmoothScroll>
+              <RouteMeta />
+              <ScrollToTop />
+              <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
+                <DiscordInviteRedirect />
               </div>
             </SmoothScroll>
           </TransitionProvider>
@@ -133,6 +154,7 @@ function App() {
                   {/* BroskiSMP — path fallback for the smp.ibroski.net subdomain */}
                   <Route path="/smp" element={<SmpHome base="/smp" />} />
                   <Route path="/smp/application" element={<SmpApplication base="/smp" />} />
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
