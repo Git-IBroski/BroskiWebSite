@@ -22,19 +22,23 @@ function crossSubdomainCookieDomain(): string | null {
 
 const COOKIE_DOMAIN = crossSubdomainCookieDomain();
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
-const CHUNK = 3600; // keep each cookie comfortably under the ~4KB browser limit
+// Max size of a single cookie's VALUE. We store the already URL-encoded string,
+// so this is the real byte size — safely under the browser's ~4KB per-cookie cap.
+const CHUNK = 3500;
 
-function writeCookie(name: string, value: string) {
-  let str = `${name}=${encodeURIComponent(value)}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+// Writes a raw (already cookie-safe) value. No further encoding is applied here.
+function writeCookie(name: string, rawValue: string) {
+  let str = `${name}=${rawValue}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
   if (COOKIE_DOMAIN) str += `; domain=${COOKIE_DOMAIN}`;
   if (window.location.protocol === 'https:') str += '; Secure';
   document.cookie = str;
 }
 
+// Returns the raw stored value (still URL-encoded), or null.
 function readCookie(name: string): string | null {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
-  return match ? decodeURIComponent(match[1]) : null;
+  return match ? match[1] : null;
 }
 
 function deleteCookie(name: string) {
@@ -53,23 +57,25 @@ function removeCookieKey(key: string) {
 }
 
 // Storage adapter that keeps the Supabase session in cookies (chunked when large)
-// so it is shared across ibroski.net subdomains. Reads fall back to a previous
-// localStorage session once, migrating existing logins to the shared cookie.
+// so it is shared across ibroski.net subdomains. The value is URL-encoded ONCE and
+// then split into cookie-safe chunks (encoding a whole chunk would overflow the
+// ~4KB cookie limit and the browser would silently drop it). Reads fall back to a
+// previous localStorage session once, migrating existing logins to the cookie.
 const crossSubdomainStorage = {
   getItem(key: string): string | null {
     if (!isBrowser) return null;
     const single = readCookie(key);
-    if (single !== null) return single;
+    if (single !== null) return decodeURIComponent(single);
     if (readCookie(`${key}.0`) !== null) {
       let i = 0;
-      let out = '';
+      let encoded = '';
       let part = readCookie(`${key}.${i}`);
       while (part !== null) {
-        out += part;
+        encoded += part;
         i++;
         part = readCookie(`${key}.${i}`);
       }
-      return out;
+      return decodeURIComponent(encoded);
     }
     // Migration: an existing session previously stored in localStorage.
     try {
@@ -81,12 +87,13 @@ const crossSubdomainStorage = {
   setItem(key: string, value: string) {
     if (!isBrowser) return;
     removeCookieKey(key);
-    if (value.length <= CHUNK) {
-      writeCookie(key, value);
+    const encoded = encodeURIComponent(value);
+    if (encoded.length <= CHUNK) {
+      writeCookie(key, encoded);
     } else {
       let i = 0;
-      for (let pos = 0; pos < value.length; pos += CHUNK, i++) {
-        writeCookie(`${key}.${i}`, value.slice(pos, pos + CHUNK));
+      for (let pos = 0; pos < encoded.length; pos += CHUNK, i++) {
+        writeCookie(`${key}.${i}`, encoded.slice(pos, pos + CHUNK));
       }
     }
     // Cookie is now the source of truth; drop any stale localStorage copy.
@@ -106,6 +113,30 @@ const crossSubdomainStorage = {
     }
   },
 };
+
+// Proactively migrate an existing localStorage session into the shared cookie, so
+// a user already logged in on www.ibroski.net is recognized on smp.* on their very
+// next load (rather than waiting for Supabase to refresh the token first).
+if (isBrowser && COOKIE_DOMAIN) {
+  let ref: string | null = null;
+  try {
+    ref = new URL(supabaseUrl || '').hostname.split('.')[0];
+  } catch {
+    ref = null;
+  }
+  if (ref) {
+    const key = `sb-${ref}-auth-token`;
+    const hasCookie = readCookie(key) !== null || readCookie(`${key}.0`) !== null;
+    if (!hasCookie) {
+      try {
+        const ls = window.localStorage.getItem(key);
+        if (ls) crossSubdomainStorage.setItem(key, ls);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
   auth: {
