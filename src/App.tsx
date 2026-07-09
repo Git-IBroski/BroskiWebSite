@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollToTop from './components/ScrollToTop'
@@ -38,8 +38,52 @@ import BombPartyDebug from './pages/BombPartyDebug'
 import { RouteMeta } from './components/RouteMeta'
 import ManteinancePage from './pages/ManteinancePage'
 import TierlistMaintenance from './pages/TierlistMaintenance'
+import SmpHome from './pages/smp/SmpHome'
+import SmpApplication from './pages/smp/SmpApplication'
+
+// The BroskiSMP experience is served on the `smp.` subdomain at the root path
+// (production: smp.ibroski.net), and mirrored under `/smp` on the main domain so
+// it stays testable on the dev server / preview without DNS.
+const isSmpHost = typeof window !== 'undefined' && window.location.hostname.startsWith('smp.')
+
+function SmpApp() {
+  return (
+    <div className="flex-grow flex flex-col">
+      <Header />
+      <div className="flex-grow flex flex-col">
+        <Routes>
+          <Route path="/" element={<SmpHome base="" />} />
+          <Route path="/application" element={<SmpApplication base="" />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+      <Footer />
+    </div>
+  )
+}
 
 function App() {
+  if (isSmpHost) {
+    return (
+      <Router>
+        <AuthProvider>
+          <TransitionProvider>
+            <SmoothScroll>
+              <RouteMeta />
+              <ScrollToTop />
+              <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
+                <SmpApp />
+              </div>
+            </SmoothScroll>
+          </TransitionProvider>
+        </AuthProvider>
+      </Router>
+    )
+  }
+
   return (
     <Router>
       <AuthProvider>
@@ -86,6 +130,9 @@ function App() {
                   <Route path="/bomb-party" element={<BombParty />} />
                   <Route path="/bomb-party/:roomCode" element={<BombParty />} />
                   <Route path="/bomb-party-debug" element={<BombPartyDebug />} />
+                  {/* BroskiSMP — path fallback for the smp.ibroski.net subdomain */}
+                  <Route path="/smp" element={<SmpHome base="/smp" />} />
+                  <Route path="/smp/application" element={<SmpApplication base="/smp" />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
