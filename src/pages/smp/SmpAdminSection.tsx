@@ -19,7 +19,7 @@ type QuestionDraft = Partial<SmpQuestion> & { optionsText?: string; optionsTextE
 const emptyPlugin: PluginDraft = { name: '', name_en: '', description: '', description_en: '', icon: '', sort_order: 0 };
 const emptyQuestion: QuestionDraft = {
   label: '', label_en: '', helper: '', helper_en: '', type: 'text',
-  required: true, sort_order: 0, active: true, optionsText: '', optionsTextEn: '',
+  required: true, sort_order: 0, active: true, optionsText: '', optionsTextEn: '', url_prefix: '',
 };
 
 const SmpAdminSection: React.FC = () => {
@@ -160,6 +160,7 @@ const SmpAdminSection: React.FC = () => {
       type: qForm.type as SmpQuestionType,
       options,
       options_en,
+      url_prefix: qForm.type === 'url' ? (qForm.url_prefix?.trim() || null) : null,
       required: qForm.required ?? true,
       sort_order: qForm.sort_order ?? 0,
       active: qForm.active ?? true,
@@ -388,6 +389,20 @@ const SmpAdminSection: React.FC = () => {
                   <p className="mt-1 font-body-sm text-[11px] text-on-surface-variant">Mantieni lo stesso ordine e numero di righe tra IT ed EN.</p>
                 </div>
               )}
+              {qForm.type === 'url' && (
+                <div className="sm:col-span-2">
+                  <label className={label}>Inizio URL richiesto (comune a IT/EN)</label>
+                  <input
+                    className={input}
+                    value={qForm.url_prefix ?? ''}
+                    onChange={(e) => setQForm({ ...qForm, url_prefix: e.target.value })}
+                    placeholder="es. https://www.youtube.com/@"
+                  />
+                  <p className="mt-1 font-body-sm text-[11px] text-on-surface-variant">
+                    Il link inserito dal candidato dovrà iniziare esattamente con questo testo, altrimenti non potrà inviare la candidatura. Lascia vuoto per accettare qualsiasi URL.
+                  </p>
+                </div>
+              )}
               <label className="flex items-center gap-2 font-body-sm text-white">
                 <input type="checkbox" checked={qForm.required ?? true} onChange={(e) => setQForm({ ...qForm, required: e.target.checked })} className="h-5 w-5 accent-tertiary" />
                 Obbligatoria
@@ -418,6 +433,7 @@ const SmpAdminSection: React.FC = () => {
                   <p className="font-label-caps text-[10px] text-on-surface-variant">
                     {SMP_QUESTION_TYPES.find((t) => t.value === q.type)?.label} • #{q.sort_order}
                     {q.options?.length > 0 && ` • ${q.options.length} opzioni`}
+                    {q.type === 'url' && q.url_prefix && ` • inizia con ${q.url_prefix}`}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-2">
