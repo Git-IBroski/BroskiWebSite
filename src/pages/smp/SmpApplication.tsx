@@ -35,6 +35,8 @@ const UI = {
     yes: 'Sì',
     no: 'No',
     please_answer: (l: string) => `Rispondi a: "${l}"`,
+    bad_url: (l: string, p: string) => `Il link per "${l}" deve iniziare con "${p}".`,
+    url_hint: (p: string) => `Deve iniziare con ${p}`,
     submit: 'Invia candidatura',
     submitting: 'Invio…',
   },
@@ -58,6 +60,8 @@ const UI = {
     yes: 'Yes',
     no: 'No',
     please_answer: (l: string) => `Please answer: "${l}"`,
+    bad_url: (l: string, p: string) => `The link for "${l}" must start with "${p}".`,
+    url_hint: (p: string) => `Must start with ${p}`,
     submit: 'Submit application',
     submitting: 'Submitting…',
   },
@@ -125,11 +129,24 @@ const SmpApplication: React.FC<SmpApplicationProps> = ({ base }) => {
 
   const firstMissing = useMemo(() => questions.find(isMissing), [questions, values]);
 
+  // A url question is invalid when its (non-empty) value doesn't start with the required prefix.
+  const urlError = (q: SmpQuestion): boolean => {
+    if (q.type !== 'url' || !q.url_prefix) return false;
+    const v = values[q.id];
+    if (typeof v !== 'string' || v.trim() === '') return false; // emptiness handled by required check
+    return !v.trim().startsWith(q.url_prefix);
+  };
+
   const handleSubmit = async () => {
     setError(null);
     if (!user) return;
     if (firstMissing) {
       setError(ui.please_answer(pick(language, firstMissing.label, firstMissing.label_en)));
+      return;
+    }
+    const badUrl = questions.find(urlError);
+    if (badUrl && badUrl.url_prefix) {
+      setError(ui.bad_url(pick(language, badUrl.label, badUrl.label_en), badUrl.url_prefix));
       return;
     }
     setSubmitting(true);
@@ -234,6 +251,28 @@ const SmpApplication: React.FC<SmpApplicationProps> = ({ base }) => {
             ))}
           </div>
         );
+      case 'url': {
+        const raw = ((v as string) ?? '').trim();
+        const invalid = !!q.url_prefix && raw !== '' && !raw.startsWith(q.url_prefix);
+        return (
+          <div>
+            <input
+              type="url"
+              inputMode="url"
+              value={(v as string) ?? ''}
+              onChange={(e) => setValue(q.id, e.target.value)}
+              className={`${inputClass} ${invalid ? 'border-red-500' : ''}`}
+              placeholder={q.url_prefix || 'https://…'}
+            />
+            {q.url_prefix && (
+              <p className={`mt-2 font-body-sm text-[12px] ${invalid ? 'text-red-400' : 'text-on-surface-variant'}`}>
+                <span className="material-symbols-outlined align-middle text-[15px]">{invalid ? 'error' : 'link'}</span>{' '}
+                {invalid ? ui.bad_url(pick(language, q.label, q.label_en), q.url_prefix) : ui.url_hint(q.url_prefix)}
+              </p>
+            )}
+          </div>
+        );
+      }
       case 'text':
       default:
         return (

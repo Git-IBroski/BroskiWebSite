@@ -8,7 +8,8 @@ export type SmpQuestionType =
   | 'number'
   | 'multiple_choice'
   | 'checkbox'
-  | 'boolean';
+  | 'boolean'
+  | 'url';
 
 // Base columns hold Italian; *_en columns hold English (fall back to base when empty).
 // Mirrors the `news` table convention used elsewhere on the site.
@@ -47,6 +48,8 @@ export interface SmpQuestion {
   type: SmpQuestionType;
   options: string[];
   options_en: string[] | null;
+  // Required URL prefix for 'url' questions (e.g. https://www.youtube.com/@). Language-independent.
+  url_prefix: string | null;
   required: boolean;
   sort_order: number;
   active: boolean;
@@ -87,6 +90,7 @@ export const SMP_QUESTION_TYPES: { value: SmpQuestionType; label: string }[] = [
   { value: 'text', label: 'Short text' },
   { value: 'textarea', label: 'Long text' },
   { value: 'number', label: 'Number' },
+  { value: 'url', label: 'URL / Link' },
   { value: 'multiple_choice', label: 'Multiple choice (pick one)' },
   { value: 'checkbox', label: 'Checkboxes (pick many)' },
   { value: 'boolean', label: 'Yes / No' },
