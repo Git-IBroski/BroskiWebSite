@@ -81,13 +81,13 @@ const routeMeta: Record<string, Record<Language, MetaContent>> = {
 // Meta for the BroskiSMP subdomain / /smp paths.
 const smpMeta: Record<Language, MetaContent> = {
   it: {
-    title: 'BroskiSMP',
+    title: 'Broski SMP — i Broski',
     description: 'Il server survival multiplayer della Broski Community. Scopri di più e candidati per entrare.',
     url: 'https://smp.ibroski.net',
     image: 'https://www.ibroski.net/og-cover.png',
   },
   en: {
-    title: 'BroskiSMP',
+    title: 'Broski SMP — i Broski',
     description: 'The survival multiplayer server of the Broski Community. Learn more and apply to join.',
     url: 'https://smp.ibroski.net',
     image: 'https://www.ibroski.net/og-cover.png',
