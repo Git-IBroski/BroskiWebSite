@@ -41,14 +41,16 @@ import TierlistMaintenance from './pages/TierlistMaintenance'
 import SmpHome from './pages/smp/SmpHome'
 import SmpApplication from './pages/smp/SmpApplication'
 import DiscordInviteRedirect from './pages/DiscordInviteRedirect'
+import VerifyDiscord from './pages/VerifyDiscord'
 import CookieConsent from './components/CookieConsent'
-import { isDiscordHost, isSmpHost } from './utils/hostRouting'
+import { isDiscordHost, isSmpHost, isVerifyHost } from './utils/hostRouting'
 
 // The BroskiSMP experience is served on the `smp.` subdomain at the root path
 // (production: smp.ibroski.net), and mirrored under `/smp` on the main domain so
 // it stays testable on the dev server / preview without DNS.
 const isSmpHostValue = typeof window !== 'undefined' && isSmpHost(window.location.hostname)
 const isDiscordHostValue = typeof window !== 'undefined' && isDiscordHost(window.location.hostname)
+const isVerifyHostValue = typeof window !== 'undefined' && isVerifyHost(window.location.hostname)
 
 function SmpApp() {
   return (
@@ -82,6 +84,30 @@ function App() {
                 <SmpApp />
               </div>
               <CookieConsent />
+            </SmoothScroll>
+          </TransitionProvider>
+        </AuthProvider>
+      </Router>
+    )
+  }
+
+  if (isVerifyHostValue) {
+    return (
+      <Router>
+        <AuthProvider>
+          <TransitionProvider>
+            <SmoothScroll>
+              <RouteMeta />
+              <ScrollToTop />
+              <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
+                <div className="flex-grow flex flex-col">
+                  <Routes>
+                    <Route path="/" element={<VerifyDiscord />} />
+                    <Route path="/verify" element={<VerifyDiscord />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </div>
+              </div>
             </SmoothScroll>
           </TransitionProvider>
         </AuthProvider>
@@ -153,6 +179,8 @@ function App() {
                   <Route path="/bomb-party" element={<BombParty />} />
                   <Route path="/bomb-party/:roomCode" element={<BombParty />} />
                   <Route path="/bomb-party-debug" element={<BombPartyDebug />} />
+                  {/* Verify Discord page — also available on the verify. subdomain */}
+                  <Route path="/verify-discord" element={<VerifyDiscord />} />
                   {/* BroskiSMP — path fallback for the smp.ibroski.net subdomain */}
                   <Route path="/smp" element={<SmpHome base="/smp" />} />
                   <Route path="/smp/application" element={<SmpApplication base="/smp" />} />
