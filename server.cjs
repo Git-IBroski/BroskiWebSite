@@ -63,8 +63,12 @@ app.get('/api/discord-callback', async function (req, res) {
     return redirectToResult(res, host, 'missing_token');
   }
   if (!DISCORD_CLIENT_ID || !DISCORD_CLIENT_SECRET || !DISCORD_REDIRECT_URI) {
-    console.error('[discord-callback] Variabili OAuth Discord mancanti');
-    return redirectToResult(res, host, 'config_error');
+    var missingOAuth = [];
+    if (!DISCORD_CLIENT_ID) missingOAuth.push('DISCORD_CLIENT_ID');
+    if (!DISCORD_CLIENT_SECRET) missingOAuth.push('DISCORD_CLIENT_SECRET');
+    if (!DISCORD_REDIRECT_URI) missingOAuth.push('DISCORD_REDIRECT_URI');
+    console.error('[discord-callback] Variabili OAuth Discord mancanti:', missingOAuth.join(', '));
+    return redirectToResult(res, host, 'config_error:missing_' + missingOAuth.join('_'));
   }
 
   // 1. Scambia il code per un access token
@@ -114,8 +118,11 @@ app.get('/api/discord-callback', async function (req, res) {
 
   // 3. Webhook verso BroskiBOT
   if (!BROSKI_BOT_WEBHOOK_URL || !BROSKI_WEBHOOK_SECRET) {
-    console.error('[discord-callback] Variabili webhook BroskiBOT mancanti');
-    return redirectToResult(res, host, 'config_error');
+    var missingWebhook = [];
+    if (!BROSKI_BOT_WEBHOOK_URL) missingWebhook.push('BROSKI_BOT_WEBHOOK_URL');
+    if (!BROSKI_WEBHOOK_SECRET) missingWebhook.push('BROSKI_WEBHOOK_SECRET');
+    console.error('[discord-callback] Variabili webhook BroskiBOT mancanti:', missingWebhook.join(', '));
+    return redirectToResult(res, host, 'config_error:missing_' + missingWebhook.join('_'));
   }
 
   try {
@@ -148,8 +155,8 @@ app.get('/api/discord-callback', async function (req, res) {
     }
 
     if (webhookResp.status === 401) {
-      console.error('[discord-callback] Autenticazione webhook fallita — controlla BROSKI_WEBHOOK_SECRET');
-      return redirectToResult(res, host, 'config_error');
+      console.error('[discord-callback] Autenticazione webhook fallita — BROSKI_WEBHOOK_SECRET non corrisponde');
+      return redirectToResult(res, host, 'config_error:webhook_401_secret_mismatch');
     }
 
     console.error('[discord-callback] Webhook risposta inattesa:', webhookResp.status);
