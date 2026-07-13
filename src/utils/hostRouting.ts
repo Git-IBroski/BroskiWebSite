@@ -5,3 +5,7 @@ export function isSmpHost(hostname: string): boolean {
 export function isDiscordHost(hostname: string): boolean {
   return hostname.startsWith('discord.')
 }
+
+export function isVerifyHost(hostname: string): boolean {
+  return hostname.startsWith('verify.')
+}
