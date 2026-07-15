@@ -280,9 +280,21 @@ const CollabRequestForm: React.FC = () => {
                   rows={4}
                   className="w-full resize-none rounded-2xl border-[3px] border-black bg-surface-container-lowest px-4 py-3 font-body-sm text-on-surface placeholder:text-on-surface-variant/50 focus:border-[#5865F2] focus:outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 />
-                <span className="font-label-caps text-[10px] text-on-surface-variant/60 text-right">
-                  {description.length}/1000
-                </span>
+                <div className="flex items-center justify-between">
+                  {description.trim().length < 10 && (
+                    <span className="font-label-caps text-[10px] text-error font-bold">
+                      Ancora {10 - description.trim().length} caratteri mancanti
+                    </span>
+                  )}
+                  {description.trim().length >= 10 && (
+                    <span className="font-label-caps text-[10px] text-green-500 font-bold">
+                      ✅ Minimo raggiunto
+                    </span>
+                  )}
+                  <span className="font-label-caps text-[10px] text-on-surface-variant/60">
+                    {description.length}/1000
+                  </span>
+                </div>
               </div>
 
               {/* ETA */}
