@@ -42,8 +42,9 @@ import SmpHome from './pages/smp/SmpHome'
 import SmpApplication from './pages/smp/SmpApplication'
 import DiscordInviteRedirect from './pages/DiscordInviteRedirect'
 import VerifyDiscord from './pages/VerifyDiscord'
+import CollabRequestForm from './pages/CollabRequestForm'
 import CookieConsent from './components/CookieConsent'
-import { isDiscordHost, isSmpHost, isVerifyHost } from './utils/hostRouting'
+import { isDiscordHost, isSmpHost, isVerifyHost, isCollabHost } from './utils/hostRouting'
 
 // The BroskiSMP experience is served on the `smp.` subdomain at the root path
 // (production: smp.ibroski.net), and mirrored under `/smp` on the main domain so
@@ -51,6 +52,7 @@ import { isDiscordHost, isSmpHost, isVerifyHost } from './utils/hostRouting'
 const isSmpHostValue = typeof window !== 'undefined' && isSmpHost(window.location.hostname)
 const isDiscordHostValue = typeof window !== 'undefined' && isDiscordHost(window.location.hostname)
 const isVerifyHostValue = typeof window !== 'undefined' && isVerifyHost(window.location.hostname)
+const isCollabHostValue = typeof window !== 'undefined' && isCollabHost(window.location.hostname)
 
 function SmpApp() {
   return (
@@ -104,6 +106,30 @@ function App() {
                   <Routes>
                     <Route path="/" element={<VerifyDiscord />} />
                     <Route path="/verify" element={<VerifyDiscord />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </div>
+              </div>
+            </SmoothScroll>
+          </TransitionProvider>
+        </AuthProvider>
+      </Router>
+    )
+  }
+
+  if (isCollabHostValue) {
+    return (
+      <Router>
+        <AuthProvider>
+          <TransitionProvider>
+            <SmoothScroll>
+              <RouteMeta />
+              <ScrollToTop />
+              <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
+                <div className="flex-grow flex flex-col">
+                  <Routes>
+                    <Route path="/" element={<CollabRequestForm />} />
+                    <Route path="/requestform" element={<CollabRequestForm />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </div>

@@ -9,3 +9,7 @@ export function isDiscordHost(hostname: string): boolean {
 export function isVerifyHost(hostname: string): boolean {
   return hostname.startsWith('verify.')
 }
+
+export function isCollabHost(hostname: string): boolean {
+  return hostname.startsWith('collabs.')
+}

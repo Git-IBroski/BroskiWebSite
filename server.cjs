@@ -167,6 +167,97 @@ app.get('/api/discord-callback', async function (req, res) {
   }
 });
 
+// ── API: Collab Request (/api/collab-request) ─────────────────────────────
+app.post('/api/collab-request', express.json(), async function (req, res) {
+  var host = req.get('host') || 'collabs.ibroski.net';
+  var { webhook_id, description, eta, people_count } = req.body || {};
+
+  if (!webhook_id || !description) {
+    return res.status(400).json({ success: false, message: 'Dati mancanti.' });
+  }
+
+  if (!BROSKI_BOT_WEBHOOK_URL || !BROSKI_WEBHOOK_SECRET) {
+    return res.status(500).json({ success: false, message: 'Server non configurato.' });
+  }
+
+  try {
+    var baseUrl = BROSKI_BOT_WEBHOOK_URL.replace(/\/webhook\/verify\/?$/, '');
+    var webhookUrl = baseUrl + '/webhook/collab-request';
+    var webhookResp = await fetchWithRetry(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + BROSKI_WEBHOOK_SECRET,
+      },
+      body: JSON.stringify({
+        webhook_id: webhook_id,
+        description: description,
+        eta: eta || '',
+        people_count: parseInt(people_count) || 1,
+      }),
+    });
+
+    if (webhookResp.ok) {
+      var data = await webhookResp.json();
+      return res.json({ success: true, collab_id: data.collab_id });
+    }
+
+    if (webhookResp.status === 400) {
+      return res.status(400).json({ success: false, message: 'ID richiesta non valido o scaduto.' });
+    }
+
+    if (webhookResp.status === 429) {
+      return res.status(429).json({ success: false, message: 'Hai inviato troppe richieste. Riprova più tardi.' });
+    }
+
+    if (webhookResp.status === 403) {
+      return res.status(403).json({ success: false, message: 'Accesso negato. Potresti essere bannato o non aver accettato i ToS.' });
+    }
+
+    console.error('[collab-request] Webhook risposta inattesa:', webhookResp.status);
+    return res.status(500).json({ success: false, message: 'Errore del server.' });
+  } catch (err) {
+    console.error('[collab-request] Webhook non raggiungibile:', err.message);
+    return res.status(502).json({ success: false, message: 'Bot non raggiungibile. Riprova tra qualche minuto.' });
+  }
+});
+
+// ── API: Collab ToS (/api/collab-tos) ───────────────────────────────────────
+app.post('/api/collab-tos', express.json(), async function (req, res) {
+  var { user_id } = req.body || {};
+
+  if (!user_id) {
+    return res.status(400).json({ success: false, message: 'user_id mancante.' });
+  }
+
+  if (!BROSKI_BOT_WEBHOOK_URL || !BROSKI_WEBHOOK_SECRET) {
+    return res.status(500).json({ success: false, message: 'Server non configurato.' });
+  }
+
+  try {
+    var baseUrl = BROSKI_BOT_WEBHOOK_URL.replace(/\/webhook\/verify\/?$/, '');
+    var webhookUrl = baseUrl + '/webhook/collab-tos';
+    var webhookResp = await fetchWithRetry(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + BROSKI_WEBHOOK_SECRET,
+      },
+      body: JSON.stringify({ user_id: String(user_id) }),
+    });
+
+    if (webhookResp.ok) {
+      return res.json({ success: true });
+    }
+
+    console.error('[collab-tos] Webhook risposta inattesa:', webhookResp.status);
+    return res.status(500).json({ success: false, message: 'Errore del server.' });
+  } catch (err) {
+    console.error('[collab-tos] Webhook non raggiungibile:', err.message);
+    return res.status(502).json({ success: false, message: 'Bot non raggiungibile.' });
+  }
+});
+
 // ── File statici (build Vite) ─────────────────────────────────────────────
 var distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
