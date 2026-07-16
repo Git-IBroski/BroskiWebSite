@@ -44,7 +44,9 @@ import DiscordInviteRedirect from './pages/DiscordInviteRedirect'
 import VerifyDiscord from './pages/VerifyDiscord'
 import CollabRequestForm from './pages/CollabRequestForm'
 import CookieConsent from './components/CookieConsent'
-import { isDiscordHost, isSmpHost, isVerifyHost, isCollabHost } from './utils/hostRouting'
+import RequireOwner from './components/RequireOwner'
+import BotDashboard from './pages/BotDashboard/BotDashboard'
+import { isDiscordHost, isSmpHost, isVerifyHost, isCollabHost, isBotHost } from './utils/hostRouting'
 
 // The BroskiSMP experience is served on the `smp.` subdomain at the root path
 // (production: smp.ibroski.net), and mirrored under `/smp` on the main domain so
@@ -53,6 +55,7 @@ const isSmpHostValue = typeof window !== 'undefined' && isSmpHost(window.locatio
 const isDiscordHostValue = typeof window !== 'undefined' && isDiscordHost(window.location.hostname)
 const isVerifyHostValue = typeof window !== 'undefined' && isVerifyHost(window.location.hostname)
 const isCollabHostValue = typeof window !== 'undefined' && isCollabHost(window.location.hostname)
+const isBotHostValue = typeof window !== 'undefined' && isBotHost(window.location.hostname)
 
 function SmpApp() {
   return (
@@ -130,6 +133,29 @@ function App() {
                   <Routes>
                     <Route path="/" element={<CollabRequestForm />} />
                     <Route path="/requestform" element={<CollabRequestForm />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </div>
+              </div>
+            </SmoothScroll>
+          </TransitionProvider>
+        </AuthProvider>
+      </Router>
+    )
+  }
+
+  if (isBotHostValue) {
+    return (
+      <Router>
+        <AuthProvider>
+          <TransitionProvider>
+            <SmoothScroll>
+              <RouteMeta />
+              <ScrollToTop />
+              <div className="dark min-h-screen font-body-lg text-body-lg flex flex-col">
+                <div className="flex-grow flex flex-col">
+                  <Routes>
+                    <Route path="/" element={<RequireOwner><BotDashboard /></RequireOwner>} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </div>

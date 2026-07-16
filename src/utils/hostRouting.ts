@@ -13,3 +13,7 @@ export function isVerifyHost(hostname: string): boolean {
 export function isCollabHost(hostname: string): boolean {
   return hostname.startsWith('collabs.')
 }
+
+export function isBotHost(hostname: string): boolean {
+  return hostname.startsWith('bot.')
+}

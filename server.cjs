@@ -7,6 +7,7 @@
 
 const express = require('express');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 const app = express();
 
 // ── Variabili d'ambiente (impostate in Coolify) ────────────────────────────
@@ -15,6 +16,15 @@ const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
 const DISCORD_REDIRECT_URI  = process.env.DISCORD_REDIRECT_URI;
 const BROSKI_WEBHOOK_SECRET = process.env.BROSKI_WEBHOOK_SECRET;
 const BROSKI_BOT_WEBHOOK_URL = process.env.BROSKI_BOT_WEBHOOK_URL;
+const SUPABASE_URL          = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY     = process.env.SUPABASE_ANON_KEY;
+const ADMIN_API_KEY          = process.env.ADMIN_API_KEY;
+const BOT_API_BASE           = process.env.BOT_API_BASE || 'http://localhost:8000';
+
+// ── Supabase client (singleton, non per-request) ──────────────────────────
+var supabaseAdmin = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
 const DISCORD_API = 'https://discord.com/api/v10';
 
@@ -255,6 +265,91 @@ app.post('/api/collab-tos', express.json(), async function (req, res) {
   } catch (err) {
     console.error('[collab-tos] Webhook non raggiungibile:', err.message);
     return res.status(502).json({ success: false, message: 'Bot non raggiungibile.' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── API: Bot Dashboard proxy (/api/bot-admin/*) ──────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Middleware: verifica che l'utente sia owner del server
+async function requireOwner(req, res, next) {
+  var authHeader = req.get('authorization') || '';
+  var token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Non autenticato' });
+  }
+
+  if (!supabaseAdmin) {
+    console.error('[bot-admin] SUPABASE_URL o SUPABASE_ANON_KEY non configurati');
+    return res.status(500).json({ error: 'Server non configurato' });
+  }
+
+  try {
+    // Verifica il token Supabase
+    var { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      console.error('[bot-admin] Auth fallita:', authError?.message);
+      return res.status(401).json({ error: 'Sessione non valida' });
+    }
+
+    // Controlla che il profilo abbia admin_rank === 'owner'
+    var { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('admin_rank, role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return res.status(403).json({ error: 'Profilo non trovato' });
+    }
+
+    if (profile.admin_rank !== 'owner') {
+      return res.status(403).json({ error: 'Accesso riservato al proprietario' });
+    }
+
+    req.userId = user.id;
+    next();
+  } catch (err) {
+    console.error('[bot-admin] Errore auth:', err.message);
+    return res.status(500).json({ error: 'Errore di autenticazione' });
+  }
+}
+
+// Proxy generico per tutte le richieste /api/bot-admin/*
+app.all('/api/bot-admin/*', requireOwner, express.json(), async function (req, res) {
+  if (!ADMIN_API_KEY) {
+    return res.status(500).json({ error: 'ADMIN_API_KEY non configurato' });
+  }
+
+  var botPath = req.path.replace('/api/bot-admin', '/api/admin');
+  var botUrl = BOT_API_BASE + botPath;
+
+  if (req.query && Object.keys(req.query).length > 0) {
+    botUrl += '?' + new URLSearchParams(req.query).toString();
+  }
+
+  try {
+    var fetchOptions = {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': ADMIN_API_KEY,
+      },
+    };
+
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      fetchOptions.body = JSON.stringify(req.body);
+    }
+
+    var botResp = await fetchWithRetry(botUrl, fetchOptions, 2);
+    var respData = await botResp.json().catch(function () { return null; });
+
+    return res.status(botResp.status).json(respData || { error: 'Risposta vuota dal bot' });
+  } catch (err) {
+    console.error('[bot-admin] Bot non raggiungibile:', err.message);
+    return res.status(502).json({ error: 'Bot offline o non raggiungibile' });
   }
 });
 

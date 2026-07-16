@@ -33,3 +33,6 @@ dtt-player-tokens.local.txt
 .env.seed
 scripts/_dtt_seed_batches/
 scripts/_dtt_*.cjs
+.claude
+.vscode
+.mcp.json
