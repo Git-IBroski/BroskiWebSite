@@ -333,15 +333,18 @@ const TicketManager: React.FC = () => {
 
       {/* ── Create/Edit Form Modal ──────────────────────────────────────────── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[5vh]" onClick={(e) => { if (e.target === e.currentTarget) { setShowForm(false); setEditing(null); } }}>
-          <div className="w-full max-w-5xl">
-            <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-              {/* Form */}
-              <form onSubmit={handleSaveConfig}
-                className="rounded-2xl border-[4px] border-black bg-surface-container-high p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] max-h-[90vh] overflow-y-auto [overscroll-behavior-y:contain]">
-                <h3 className="font-headline-md text-[24px] text-white mb-6">
-                  {editing ? '✏️ Modifica Pannello' : '🆕 Nuovo Pannello Ticket'}
-                </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) { setShowForm(false); setEditing(null); } }}>
+          <div className="w-full max-w-5xl max-h-[92vh] flex flex-col">
+            {/* Form header */}
+            <h3 className="font-headline-md text-[24px] text-white mb-3 flex-shrink-0">
+              {editing ? '✏️ Modifica Pannello' : '🆕 Nuovo Pannello Ticket'}
+            </h3>
+
+            <div className="grid gap-6 lg:grid-cols-[1fr_380px] min-h-0 flex-1">
+              {/* Scrollable Form Column */}
+              <div className="overflow-y-auto overscroll-contain min-h-0 pr-1">
+                <form onSubmit={handleSaveConfig}
+                  className="rounded-2xl border-[4px] border-black bg-surface-container-high p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
 
                 {/* Section: Info Base */}
                 <div className="mb-6">
@@ -465,12 +468,12 @@ const TicketManager: React.FC = () => {
                     className="rounded-xl border-[3px] border-black bg-surface-bright px-6 py-2.5 font-label-caps text-[12px] text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                     ANNULLA
                   </button>
-                </div>
-              </form>
+                </div>                </form>
+              </div>
 
               {/* Preview Panel */}
-              <div className="hidden lg:block">
-                <p className="font-label-caps text-[11px] text-on-surface-variant mb-2 ml-1">ANTEPRIMA DISCORD</p>
+              <div className="hidden lg:block overflow-y-auto overscroll-contain min-h-0">
+                <p className="font-label-caps text-[11px] text-on-surface-variant mb-2">ANTEPRIMA DISCORD</p>
                 <div className="sticky top-4">
                   <TicketPreview
                     name={form.name}
