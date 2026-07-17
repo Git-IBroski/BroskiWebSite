@@ -234,65 +234,62 @@ const TicketManager: React.FC = () => {
 
   // ── Empty State: Onboarding Wizard ─────────────────────────────────────────
 
-  if (configs.length === 0) {
-    return (
-      <div>
-        <h2 className="font-headline-md text-[28px] text-white mb-6">🎫 Pannelli Ticket</h2>
-        <div className="rounded-2xl border-[3px] border-black bg-surface-container-high p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="text-center mb-8">
-            <span className="material-symbols-outlined text-5xl text-primary-container">confirmation_number</span>
-            <h3 className="font-headline-md text-[22px] text-white mt-3">Nessun pannello configurato</h3>
-            <p className="text-on-surface-variant mt-2 max-w-md mx-auto">
-              I pannelli ticket permettono ai membri di aprire ticket personalizzati con campi specifici. Segui i passaggi qui sotto per crearne uno.
-            </p>
-          </div>
+  const emptyState = (
+    <div>
+      <div className="rounded-2xl border-[3px] border-black bg-surface-container-high p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div className="text-center mb-8">
+          <span className="material-symbols-outlined text-5xl text-primary-container">confirmation_number</span>
+          <h3 className="font-headline-md text-[22px] text-white mt-3">Nessun pannello configurato</h3>
+          <p className="text-on-surface-variant mt-2 max-w-md mx-auto">
+            I pannelli ticket permettono ai membri di aprire ticket personalizzati con campi specifici. Segui i passaggi qui sotto per crearne uno.
+          </p>
+        </div>
 
-          {/* Step cards */}
-          <div className="grid gap-4 sm:grid-cols-3 mb-6">
-            {[
-              {
-                step: '1',
-                icon: 'edit_square',
-                title: 'Crea il pannello',
-                desc: 'Scegli un nome, una descrizione e il canale dove apparirà il dropdown.',
-              },
-              {
-                step: '2',
-                icon: 'playlist_add',
-                title: 'Aggiungi i campi',
-                desc: 'Configura i campi del form: IGN, motivo del ticket, priorità, ecc.',
-              },
-              {
-                step: '3',
-                icon: 'preview',
-                title: 'Anteprima e pubblica',
-                desc: 'Vedi come apparirà su Discord e attiva il pannello.',
-              },
-            ].map((s) => (
-              <div key={s.step} className="rounded-xl border-[3px] border-black bg-surface-container p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-black bg-tertiary text-black font-headline-md text-[14px]">
-                    {s.step}
-                  </span>
-                  <span className="material-symbols-outlined text-primary-container text-xl">{s.icon}</span>
-                </div>
-                <h4 className="font-headline-md text-[16px] text-white">{s.title}</h4>
-                <p className="text-xs text-on-surface-variant mt-1">{s.desc}</p>
+        {/* Step cards */}
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          {[
+            {
+              step: '1',
+              icon: 'edit_square',
+              title: 'Crea il pannello',
+              desc: 'Scegli un nome, una descrizione e il canale dove apparirà il dropdown.',
+            },
+            {
+              step: '2',
+              icon: 'playlist_add',
+              title: 'Aggiungi i campi',
+              desc: 'Configura i campi del form: IGN, motivo del ticket, priorità, ecc.',
+            },
+            {
+              step: '3',
+              icon: 'preview',
+              title: 'Anteprima e pubblica',
+              desc: 'Vedi come apparirà su Discord e attiva il pannello.',
+            },
+          ].map((s) => (
+            <div key={s.step} className="rounded-xl border-[3px] border-black bg-surface-container p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-black bg-tertiary text-black font-headline-md text-[14px]">
+                  {s.step}
+                </span>
+                <span className="material-symbols-outlined text-primary-container text-xl">{s.icon}</span>
               </div>
-            ))}
-          </div>
+              <h4 className="font-headline-md text-[16px] text-white">{s.title}</h4>
+              <p className="text-xs text-on-surface-variant mt-1">{s.desc}</p>
+            </div>
+          ))}
+        </div>
 
-          <div className="text-center">
-            <button onClick={openNewForm}
-              className="rounded-xl border-[3px] border-black bg-tertiary px-8 py-3 font-label-caps text-[14px] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none">
-              <span className="material-symbols-outlined mr-2 inline-block text-[20px]">add</span>
-              CREA IL TUO PRIMO PANNELLO
-            </button>
-          </div>
+        <div className="text-center">
+          <button onClick={openNewForm}
+            className="rounded-xl border-[3px] border-black bg-tertiary px-8 py-3 font-label-caps text-[14px] text-black shadow-[5px_5px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none">
+            <span className="material-symbols-outlined mr-2 inline-block text-[20px]">add</span>
+            CREA IL TUO PRIMO PANNELLO
+          </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   // ── Main UI ────────────────────────────────────────────────────────────────
 
@@ -551,8 +548,9 @@ const TicketManager: React.FC = () => {
         </div>
       )}
 
-      {/* ── Panel List ──────────────────────────────────────────────────────── */}
-      <div className="space-y-3">
+      {/* Content: Empty state or Panel List */}
+      {configs.length === 0 ? emptyState : (
+        <div className="space-y-3">
         {configs.map((config) => {
           const fields = parseFields(config.modal_fields);
           const isExpanded = expandedId === config.id;
@@ -692,7 +690,8 @@ const TicketManager: React.FC = () => {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
