@@ -156,6 +156,9 @@ function App() {
                 <div className="flex-grow flex flex-col">
                   <Routes>
                     <Route path="/" element={<RequireOwner><BotDashboard /></RequireOwner>} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </div>
