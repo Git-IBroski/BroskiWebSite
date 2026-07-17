@@ -87,6 +87,16 @@ const TicketManager: React.FC = () => {
 
   useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
 
+  // Block body scroll when modals are open
+  useEffect(() => {
+    if (showForm || showFieldForm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [showForm, showFieldForm]);
+
   // ── Panel Actions ──────────────────────────────────────────────────────────
 
   const handleSaveConfig = async (e: React.FormEvent) => {
@@ -323,12 +333,12 @@ const TicketManager: React.FC = () => {
 
       {/* ── Create/Edit Form Modal ──────────────────────────────────────────── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[5vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[5vh]" onClick={(e) => { if (e.target === e.currentTarget) { setShowForm(false); setEditing(null); } }}>
           <div className="w-full max-w-5xl">
             <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
               {/* Form */}
               <form onSubmit={handleSaveConfig}
-                className="rounded-2xl border-[4px] border-black bg-surface-container-high p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] max-h-[85vh] overflow-y-auto">
+                className="rounded-2xl border-[4px] border-black bg-surface-container-high p-6 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] max-h-[90vh] overflow-y-auto [overscroll-behavior-y:contain]">
                 <h3 className="font-headline-md text-[24px] text-white mb-6">
                   {editing ? '✏️ Modifica Pannello' : '🆕 Nuovo Pannello Ticket'}
                 </h3>
