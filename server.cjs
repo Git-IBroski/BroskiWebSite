@@ -268,6 +268,47 @@ app.post('/api/collab-tos', express.json(), async function (req, res) {
   }
 });
 
+// ── Health check pubblico per test connettività bot (NO AUTH) ─────────────
+app.get('/api/bot-admin/health', async function (_req, res) {
+  var info = {
+    bot_api_base: BOT_API_BASE,
+    admin_api_key_set: !!ADMIN_API_KEY,
+  };
+
+  if (!ADMIN_API_KEY) {
+    return res.json({ ok: false, error: 'ADMIN_API_KEY non configurato', info: info });
+  }
+
+  var testUrl = BOT_API_BASE + '/api/admin/status';
+  try {
+    var resp = await fetchWithRetry(testUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': ADMIN_API_KEY,
+      },
+    }, 2);
+
+    var body = await resp.json().catch(function () { return null; });
+    return res.json({
+      ok: resp.ok,
+      status: resp.status,
+      body: body,
+      info: info,
+      url_tested: testUrl,
+    });
+  } catch (err) {
+    return res.json({
+      ok: false,
+      error: err.message,
+      code: err.code,
+      cause: err.cause ? String(err.cause) : undefined,
+      info: info,
+      url_tested: testUrl,
+    });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // ── API: Bot Dashboard proxy (/api/bot-admin/*) ──────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════
@@ -348,7 +389,8 @@ app.all('/api/bot-admin/*', requireOwner, express.json(), async function (req, r
 
     return res.status(botResp.status).json(respData || { error: 'Risposta vuota dal bot' });
   } catch (err) {
-    console.error('[bot-admin] Bot non raggiungibile:', err.message);
+    console.error('[bot-admin] Bot non raggiungibile — URL:', botUrl);
+    console.error('[bot-admin] Errore:', err.message, '| code:', err.code, '| cause:', err.cause);
     return res.status(502).json({ error: 'Bot offline o non raggiungibile' });
   }
 });
@@ -361,7 +403,7 @@ app.use(express.static(distPath));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── SPA fallback: ogni rotta non-API e non-file → index.html ──────────────
-// Questo equivale al "rewrites" di vercel.json.
+// Questo equivale al \"rewrites\" di vercel.json.
 app.get('*', function (_req, res) {
   res.sendFile(path.join(distPath, 'index.html'));
 });
