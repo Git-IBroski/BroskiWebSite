@@ -269,7 +269,7 @@ app.post('/api/collab-tos', express.json(), async function (req, res) {
 });
 
 // ── Health check pubblico per test connettività bot (NO AUTH) ─────────────
-app.get('/api/bot-admin/health', async function (_req, res) {
+app.get('/api/health-check', async function (_req, res) {
   var info = {
     bot_api_base: BOT_API_BASE,
     admin_api_key_set: !!ADMIN_API_KEY,
