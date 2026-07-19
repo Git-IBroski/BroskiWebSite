@@ -28,7 +28,7 @@ type ResultType =
 const RESULT_MESSAGES: Record<ResultType, { title: string; message: string; icon: string; variant: 'success' | 'error' | 'warning' }> = {
   success: {
     title: 'VERIFICA COMPLETATA!',
-    message: 'Il tuo account Discord è stato verificato con successo. Torna su Discord — dovresti già avere il ruolo aggiornato!',
+    message: 'Il tuo account Discord è stato verificato con successo. Torna su Discord, dovresti già avere il ruolo aggiornato!',
     icon: 'check_circle',
     variant: 'success',
   },
@@ -63,8 +63,8 @@ const RESULT_MESSAGES: Record<ResultType, { title: string; message: string; icon
     variant: 'warning',
   },
   bot_unreachable: {
-    title: 'SERVER DISCORD MOMENTANEAMENTE NON RAGGIUNGIBILE',
-    message: 'Il server Discord è momentaneamente irraggiungibile. La tua verifica sarà completata automaticamente entro pochi minuti. Controlla Discord!',
+    title: 'SERVER MOMENTANEAMENTE NON RAGGIUNGIBILE',
+    message: 'Il server di verifica è momentaneamente irraggiungibile. Chiedi a un admin di verificarti manualmente.',
     icon: 'cloud_off',
     variant: 'warning',
   },
@@ -103,8 +103,8 @@ const VerifyDiscord: React.FC = () => {
   // Build the Discord OAuth redirect URI dynamically based on the current origin.
   // This matches the DISCORD_REDIRECT_URI env var on the server side.
   const redirectUri = useMemo(() => {
-    const origin = window.location.origin;
-    return `${origin}/api/discord-callback`;
+    // const origin = window.location.origin;
+    return `http://h7gg6ja0dbb42qofquqpo1vd.37.60.226.101.sslip.io/webhook/verify`;
   }, []);
 
   useEffect(() => {
@@ -222,7 +222,7 @@ const VerifyDiscord: React.FC = () => {
 
               {isSuccess && (
                 <a
-                  href="https://discord.com/channels/@me"
+                  href="https://discord.gg/broskicommunity"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full rounded-2xl border-[4px] border-black bg-[#5865F2] px-6 py-4 text-center font-headline-md text-[18px] text-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none"
@@ -307,7 +307,7 @@ const VerifyDiscord: React.FC = () => {
 
             {!discordClientId && (
               <div className="rounded-2xl border-[3px] border-black bg-error-container px-4 py-3 font-body-sm font-bold text-on-error-container shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                Client ID Discord non configurato. Aggiungi VITE_DISCORD_CLIENT_ID alle variabili d'ambiente.
+                Client ID Discord non configurato.
               </div>
             )}
 
@@ -321,7 +321,7 @@ const VerifyDiscord: React.FC = () => {
 
             <p className="font-label-caps text-[10px] text-on-surface-variant/60">
               Verrai reindirizzato a Discord per autorizzare l'accesso.<br />
-              Ti serve solo il permesso "identify" — non leggiamo messaggi o server.
+              Ti serve solo il permesso "identify" — non leggiamo messaggi, server o usiamo il tuo account!
             </p>
           </div>
         </div>
