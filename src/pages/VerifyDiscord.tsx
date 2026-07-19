@@ -103,8 +103,8 @@ const VerifyDiscord: React.FC = () => {
   // Build the Discord OAuth redirect URI dynamically based on the current origin.
   // This matches the DISCORD_REDIRECT_URI env var on the server side.
   const redirectUri = useMemo(() => {
-    // const origin = window.location.origin;
-    return `http://h7gg6ja0dbb42qofquqpo1vd.37.60.226.101.sslip.io/webhook/verify`;
+    const origin = window.location.origin;
+    return `${origin}/api/discord-callback`;
   }, []);
 
   useEffect(() => {
