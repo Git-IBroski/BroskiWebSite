@@ -41,6 +41,17 @@ const idolsData: IdolData[] = [
     description: 'meow.',
     defaultImage: 'https://img.youtube.com/vi/gfisuNmDrRc/maxresdefault.jpg',
     fallbackVideoUrl: 'https://www.youtube.com/watch?v=gfisuNmDrRc'
+  },
+  {
+    name: 'Blim',
+    channelId: 'UCHFhHTPQKk8uffihq4TbY9Q',
+    channelLink: 'https://www.youtube.com/@BlimBurst',
+    colorClass: 'bg-primary-container',
+    textColorClass: 'text-primary',
+    btnTextColorClass: 'text-white',
+    description: 'meow.',
+    defaultImage: 'https://i.ytimg.com/vi/sPwbKrc1ND4/maxresdefault.jpg',
+    fallbackVideoUrl: 'https://www.youtube.com/watch?v=sPwbKrc1ND4'
   }
 ];
 
